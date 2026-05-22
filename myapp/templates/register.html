@@ -1,0 +1,79 @@
+
+ {% extends "base.html" %} 
+{% block content %}
+<div class="register">
+  <div class="reg">
+    <div class="container">
+      <h3 style="display: flex; justify-content: center">Register here!</h3>
+      <form class="mt-1" method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label for="exampleInputEmail1" class="form-label"
+            >Full Name :
+          </label>
+          <input
+            type="text"
+            class="form-control"
+            name="fullname"
+            aria-describedby="emailHelp"
+            required
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="exampleInputEmail1" class="form-label"
+            >Email address :</label
+          >
+          <input
+            type="email"
+            class="form-control"
+            name="email"
+            aria-describedby="emailHelp"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="exampleInputEmail1" class="form-label"
+            >Enter password :</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            name="password"
+            aria-describedby="emailHelp"
+            required
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="exampleInputPassword1" class="form-label"
+            >Mobile number:</label
+          >
+          <input type="number" class="form-control" name="mobileno" required />
+        </div>
+
+        <div class="mb-3">
+          <label for="exampleInputPassword1" class="form-label">D.O.B :</label>
+          <input
+            type="number"
+            class="form-control"
+            name="dateofbirth"
+            required
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="exampleInputPassword1" class="form-label"
+            >Address :</label
+          >
+          <textarea class="form-control" name="address" required> </textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,42 @@
+      #logindiv{
+        margin-top:150px !important;
+      }
+      .cont{
+        background-color:cadetblue;
+        display: flex;
+        height: 100vh;
+        
+      }
+      .pic{
+       
+        width: 50vw;
+        background-color:bisque;
+      }
+      .form{
+   
+        width: 40vw;
+        /* overflow: hidden; */
+        /* margin-right: 20px; */
+        /* box-shadow: 4px 0px 4px 4px black; */
+      }
+     h2{
+        justify-content: center;
+     }
+     .register{
+      background-color: aqua;
+          display: flex;
+    justify-content: center;
+    
+     
+     }
+     .reg{
+     
+      width: 40vw;
+      padding: 20px;
+      margin: 20px;
+      background-color: beige;
+      box-shadow: 0px 1px 20px 6px black;
+      display: flex;
+      justify-content: center;
+        
+    }

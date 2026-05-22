@@ -1,0 +1,27 @@
+ {% extends "base.html" %} 
+{% block content %}
+<div class="container mt-5">
+    {% if vacancies %}
+    <div class=" row">
+        {% for vacancy in vacancies %}
+        <div class="card col-lg-3 me-3">
+            <img src="
+        {% if vacancy.img %} 
+        {{ vacancy.img.url }} 
+        {% else %}
+         /media/avatars/job1.png 
+         {% endif %}" height="200px" width="100px" class="card-img-top" alt="{{ vacancy.title}}">
+            <div class="card-body">
+                <h5 class="card-title">{{ vacancy.title }} </h5>
+                <p class="card-text">{{ vacancy.description}}</p>
+                <p class="card-text">{{ vacancy.location}}</p>
+                <a href="{% url 'cards' vacancy.id  %}" class="btn btn-primary">Enroll</a>
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>  
+    {% else %}
+    No record found
+    {% endif %}
+    {% endblock %}
