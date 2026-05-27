@@ -11,6 +11,7 @@
        
         width: 50vw;
         background-color:bisque;
+        display: flex;
       }
       .form{
    

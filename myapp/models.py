@@ -75,19 +75,20 @@ class Jobs(models.Model):
     def __str__(self):
         return self.title
     
-class Eligibilty (models.Model):
+class Application(models.Model):
     choices =[
         ('A','choice1'),
         ('B','choice2')
     ]
-    job_id = models.ForeignKey(Employee , on_delete=models.CASCADE, related_name="employee")
+    job_id = models.ForeignKey(Jobs , on_delete=models.CASCADE, related_name="jobs")
     user_id =models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
     resume = models.FileField(upload_to='media/', blank=True, null=True)
-    skills = models.CharField(max_length=50)
+    skills = models.CharField(max_length=100)
     experience=models.IntegerField()
     current_salary=models.IntegerField()
-    apply_date=models.DurationField()
+    apply_date=models.DateTimeField()
     status=  models.CharField(max_length=1, choices=choices, default='A')
+    education=models.CharField( max_length=50 , null =True)
 # application -- 
 # job_id 
 # user_id

@@ -1,10 +1,11 @@
 
 from django.shortcuts import render, HttpResponse, get_object_or_404, redirect
-from .models import User , Profile , Employee, Company , Jobs , Eligibilty
+from .models import User , Profile , Employee, Company , Jobs, Application
 
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.mail import send_mail
 # Create your views here.
+from django.db.models import Q
 from django.contrib import messages
 import random
 import string
@@ -171,50 +172,58 @@ def add_employee(request):
         )
         print("student data added successfully")
         return redirect('login')
-    return render(request, "form.html", {"companies":companies})
+    return render(request, "add_employee.html", {"companies":companies})
 def vacancy(request):
     
     if not request.session.get('email'):
         return redirect('login')
     
     session_email = request.session.get('email')
-    curr_employee = Employee.objects.get(email = session_email)
-    print(curr_employee)
-    if not curr_employee:
+
+    if not session_email:
         return redirect('login')
-    
+    try:
 
-    if request.method == "POST":
-        print(curr_employee)
-        title=   request.POST.get("title")
-        experience =   request.POST.get("experience")
-        discription =      request.POST.get("discription")
+        curr_employee = Employee.objects.get(email = session_email)
         
-        education =  request.POST.get("education")
-        skills= request.POST.get("skills")
-        minsalary =    request.POST.get("minsalary")
-        maxsalary =   request.POST.get("maxsalary")
-     
-        deadline=   request.POST.get("deadline")
-        vacancies =   request.POST.get("vacancies")
-        location  = request.POST.get("location")
+        print(curr_employee)
+        if not curr_employee:
+            return redirect('login')
+        
 
-        Jobs.objects.create(
-            title=title,
-            experience=experience,
-            discription=discription,
+        if request.method == "POST":
+            print(curr_employee)
+            title=   request.POST.get("title")
+            experience =   request.POST.get("experience")
+            discription =      request.POST.get("discription")
             
-            skills = skills ,
-            education=education,
-            minsalary=minsalary,
-            maxsalary=maxsalary,
-            created_by=curr_employee,
+            education =  request.POST.get("education")
+            skills= request.POST.get("skills")
+            minsalary =    request.POST.get("minsalary")
+            maxsalary =   request.POST.get("maxsalary")
+        
+            deadline=   request.POST.get("deadline")
+            vacancies =   request.POST.get("vacancies")
+            location  = request.POST.get("location")
 
-            deadline=deadline,
-            vacancies=vacancies,
-            location=location,
+            Jobs.objects.create(
+                title=title,
+                experience=experience,
+                discription=discription,
+                
+                skills = skills ,
+                education=education,
+                minsalary=minsalary,
+                maxsalary=maxsalary,
+                created_by=curr_employee,
 
-        )
+                deadline=deadline,
+                vacancies=vacancies,
+                location=location,
+
+            )
+    except:
+        return redirect('login')
         
     return render(request, "vacancy.html")
     
@@ -226,28 +235,72 @@ def cards(request):
 
     vacancies = Jobs.objects.all()
     return render(request ,"cards.html", {"vacancies":vacancies})
-def eligbility(request):
-    employees= Employee.objects.all()
-    users=User.objects.all()
-    if request.method == "POST":
-        resume =   request.POST.get("resume")
-        skills=   request.POST.get("skills")
-        experience =      request.POST.get("experience")
-        current_salary =     request.POST.get("current_salary")
-        apply_date =  request.POST.get("apply_date")
-        job_id =    Employee.objects.get(id= job_id)
-        status =   request.POST.get("status")
-        user_id = User.objects.get(id = user_id)
-        Eligibilty.objects.create(
-            
-            resume =resume,
-            skills=   skills,
-            experience= experience,
-            current_salary= current_salary,
-            apply_date= apply_date,
-            status= status,
-            job_id=job_id,
-            user_id=user_id,
-        )
-    return render(request,"eligibilty.html",{"users": users , "employees":employees })
 
+
+def eligibility(request, id):
+    if not request.session.get('email'):
+        return redirect('login')
+    
+    session_email = request.session.get('email')
+
+    if not session_email:
+        return redirect('login')
+    try:
+
+        curr_user = User.objects.get(email = session_email)
+        
+        if not curr_user:
+            return redirect('login')
+        
+
+        curr_job = Jobs.objects.get(id = id)
+
+        print(curr_user)
+        print(curr_job)
+        if request.method == "POST":
+            print(curr_user)
+            print(curr_job)
+
+            resume =   request.FILES.get("resume")
+            skills=   request.POST.get("skills")
+            experience =      request.POST.get("experience")
+            current_salary =     request.POST.get("current_salary")
+            apply_date =  request.POST.get("apply_date")
+            job_id =   curr_job
+            status =   request.POST.get("status")
+            user_id = curr_user
+            education=request.POST.get("education")
+
+            print()
+            Application.objects.create(
+            
+            
+                resume =resume,
+                skills=   skills,
+                experience= experience,
+                current_salary= current_salary,
+                apply_date= apply_date,
+                education=education,
+                status= status,
+                job_id=job_id,
+                user_id=user_id,
+                )
+    except Exception as e:
+        print(e)
+        return redirect('login')
+    return render(request,"eligibility.html")
+
+
+def card_list(request):
+    query = request.GET.get('q')
+    if query:
+        jobs = Jobs.objects.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query) |
+            Q(tags__icontains=query)
+        )
+    else:
+        jobs = Jobs.objects.all()
+    return render(request, 'cards.html', {'cards': cards})
+def side(request):
+    return render(request,'base2.html')

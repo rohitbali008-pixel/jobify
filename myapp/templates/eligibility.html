@@ -1,96 +1,99 @@
-
 {% extends "base.html" %} 
 {% block content %}
 
 <div class="register">
   <div class="reg">
     <div class="container">
-      <h3 style="display: flex; justify-content: center">Add employee</h3>
+      <h3 style="display: flex; justify-content: center">Apply</h3>
       <form class="mt-1" method="post">
         {% csrf_token %}
 
         <div class="mb-3">
           <label for="exampleInputEmail1" class="form-label"
-            >Full Name :
+            >skills :
           </label>
           <input
             type="text"
             class="form-control"
-            name="fullname"
-            aria-describedby="emailHelp"
-            required
-          />
-        </div>
-
-        <div class="mb-3">
-          <label for="exampleInputEmail1" class="form-label"
-            >Email address :</label
-          >
-          <input
-            type="email"
-            class="form-control"
-            name="email"
+            name="skills"
             aria-describedby="emailHelp"
             required
           />
         </div>
         <div class="mb-3">
           <label for="exampleInputEmail1" class="form-label"
-            >Enter password :</label
-          >
+            >skills :
+          </label>
           <input
             type="text"
             class="form-control"
-            name="password"
+            name="education"
+            aria-describedby="emailHelp"
+            required
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="exampleInputEmail1" class="form-label"
+            >experience:</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            name="experience"
+            aria-describedby="emailHelp"
+            required
+          />
+        </div>
+       <div class="mb-3">
+          <label for="exampleInputEmail1" class="form-label"
+            >Current sallary:</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            name="current_salary"
             aria-describedby="emailHelp"
             required
           />
         </div>
         <div class="mb-3">
           <label for="exampleInputEmail1" class="form-label"
-            >Designation :</label
+            >Resume :</label
           >
           <input
-            type="text"
+            type="file"
             class="form-control"
-            name="designation"
+            name="resume"
             aria-describedby="emailHelp"
-            required
-          />
-        </div>
-
-
-        <div class="mb-3">
-          <label for="exampleInputPassword1" class="form-label"
-            >sallary:</label
-          >
-          <input type="number" class="form-control" name="sallary" required />
-        </div>
-
-        <div class="mb-3">
-          <label for="exampleInputPassword1" class="form-label">Date of Joining :</label>
-          <input
-            type="date"
-            class="form-control"
-            name="dateofjoining"
             required
           />
         </div>
 
         <div class="mb-3">
           <label for="exampleInputPassword1" class="form-label"
-            >company :</label>
-            <select name="company_id">
-                <option disabled selected>Select employee company</option>
-                {% for company in companies %}
-                <option value="{{ company.id }}">{{ company.name }}</option>
-                {% endfor %}
-            </select>
+          >
+          <input type="date" class="form-control" name="apply_date" required />
         </div>
 
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <div class="mb-3">
+          <label for="exampleInputPassword1" class="form-label">Status</label>
+          <input
+            type="text"
+            class="form-control"
+            name="status"
+            required
+          />
+        </div>
+        
+        
+
+
+        
+        <button type="submit" class="btn btn-primary">Apply</button>
       </form>
     </div>
   </div>
 </div>
+
 {% endblock %}

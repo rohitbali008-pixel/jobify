@@ -14,8 +14,8 @@
             <div class="card-body">
                 <h5 class="card-title">{{ vacancy.title }} </h5>
                 <p class="card-text">{{ vacancy.description}}</p>
-                <p class="card-text">{{ vacancy.location}}</p>
-                <a href="{% url 'cards' vacancy.id  %}" class="btn btn-primary">Enroll</a>
+                {% comment %} <p class="card-text">{{ vacancy.location}}</p> {% endcomment %}
+                <a href="{% url 'eligibility' vacancy.id  %}" class="btn btn-primary">Enroll</a>
             </div>
         </div>
         {% endfor %}

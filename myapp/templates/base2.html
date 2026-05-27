@@ -1,20 +1,86 @@
 {% load static %}
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Dashboard</title>
+
     <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
-      crossorigin="anonymous"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+        rel="stylesheet"
     />
-    <link href="/static/css/style.css" rel="stylesheet" />
-  </head>
-  <body>
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+
+    <style>
+        body{
+            margin:0;
+            padding:0;
+            overflow-x:hidden;
+        }
+
+    
+        .sidebar{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: #212529;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h4{
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .sidebar a{
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .main-content{
+            margin-left: 260px;
+            padding: 20px;
+            min-height: 100vh;
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <h4>Dashboard</h4>
+
+        <a class="btn btn-primary" href="{% url 'user_profile' %}">
+            Profile
+        </a>
+
+        <a class="btn btn-primary" href="{% url 'vacancy' %}">
+            Vacancy
+        </a>
+
+        <a class="btn btn-primary" href="{% url 'add_employee' %}">
+            Add Employee
+        </a>
+
+        <a class="btn btn-primary" href="{% url 'add_employee' %}">
+            View Application
+        </a>
+
+        <a class="btn btn-primary" href="{% url 'add_employee' %}">
+            Shortlisted List
+        </a>
+
+        <a class="btn btn-primary" href="{% url 'add_employee' %}">
+            Scheduled Interview
+        </a>
+    </div>
+
+    <div class="main-content">
+          <nav class="navbar navbar-expand-lg bg-body-tertiary">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">Navbar</a>
         <button
@@ -77,12 +143,9 @@
         </div>
       </div>
     </nav>
-    {% block content %} 
-    {% endblock %}
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-      crossorigin="anonymous"
-    ></script>
-  </body>
+        {% block content %}
+        {% endblock %}
+    </div>
+
+</body>
 </html>
