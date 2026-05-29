@@ -88,20 +88,24 @@ class Application(models.Model):
     current_salary=models.IntegerField()
     apply_date=models.DateTimeField()
     status=  models.CharField(max_length=1, choices=choices, default='A')
-    education=models.CharField( max_length=50 , null =True)
-# application -- 
-# job_id 
-# user_id
-# resume 
-# skills
-# experience
-# current salary
-# date of apply 
-# status -- 
+    education=models.CharField( max_length=50 , null =True)\
+    
+class Category(models.Model):
+    name=models.CharField(max_length=100)
+    company=models.ForeignKey(Company , on_delete=models.CASCADE, related_name="company")
 
 
-# test --
-# empployee 
+class Questions(models.Model):
+    job_profile=models.ForeignKey(Category,on_delete=models.CASCADE, related_name="job_profile")
+    questions=models.CharField(max_length=100)
+    opt_a= models.CharField(max_length=50)
+    opt_b=models.CharField(max_length=50)
+    opt_c=models.CharField(max_length=50)
+    opt_d=models.CharField(max_length=50)
+    answer=models.CharField(max_length=50)
+    marks=models.IntegerField()
+    added_by=models.ForeignKey(Employee,on_delete=models.SET_NULL,null=True, related_name="employee")
+    
 
 
 

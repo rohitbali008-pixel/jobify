@@ -1,6 +1,6 @@
 
 from django.shortcuts import render, HttpResponse, get_object_or_404, redirect
-from .models import User , Profile , Employee, Company , Jobs, Application
+from .models import User , Profile , Employee, Company , Jobs, Application , Category, Questions
 
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.mail import send_mail
@@ -118,6 +118,38 @@ def  user_profile(request):
     }
 
     return render(request, "userprofile.html", context)
+
+def  employee_profile(request):
+    if not request.session.get('email'):
+        return redirect('login')
+    
+    session_email = request.session.get('email')
+
+    if not session_email:
+        return redirect('login')
+    try:
+
+        curr_employee = Employee.objects.get(email = session_email)
+
+        if request.method == "POST":
+            username =  request.POST.get("username")
+            avatar =    request.FILES.get("avatar") 
+            resume =    request.FILES.get("resume")
+
+            Profile.objects.create(
+                username = username,
+                profile_pic =  avatar,
+                resume =  resume
+        )
+
+        employee= Profile.objects.all()
+        context = {
+            "employee_data":employee
+    }
+    except:
+        return redirect('login')
+
+    return render(request, "employeeprofile.html", context)
 
 def show_user(request):
     users =  User.objects.all()
@@ -304,3 +336,63 @@ def card_list(request):
     return render(request, 'cards.html', {'cards': cards})
 def side(request):
     return render(request,'base2.html')
+def courses(request):
+    companies=Company.objects,all()
+    if request.method == "POST":
+        name=  request.POST.get("name")
+        company=request.POST.get("company")
+        Category.objects.create(
+            name=name,
+            company=company,
+        )
+        job= Category.objects.all()
+    context = {
+        "job_data":job
+    }
+
+
+    return render(request,"",{"companies":companies},context)
+def test(request):
+    if not request.session.get('email'):
+        return redirect('login')
+    
+    session_email = request.session.get('email')
+
+    if not session_email:
+        return redirect('login')
+    try:
+
+        curr_employee = Employee.objects.get(email = session_email)
+        
+        print(curr_employee)
+        if not curr_employee:
+            return redirect('login')
+        employees=Employee.objects.all()
+        categories=Category.objects.all()
+        if request.method=="POST":
+            job_profile=request.POST.get("job_profile")
+            questions=request.POST.get("questions")
+            opt_a=request.POST.get("opt_a")
+            opt_b=request.POST.get("opt_b")
+            opt_c=request.POST.get("opt_c")
+            opt_d=request.POST.get("opt_d")
+            answer=request.POST.get("answer")
+            marks=request.POST.get("marks")
+            added_by=request.POST.get("added_by")
+
+            Questions.objects.create(
+                job_profile=job_profile,
+                questions=questions,
+                opt_a=opt_a,
+                opt_b=opt_b,
+                opt_c=opt_c,
+                opt_d=opt_d,
+                answer=answer,
+                marks=marks,
+                added_by=added_by,
+        )
+    except:
+        return redirect('login')
+    return render(request,"questions.html",{"employees":employees,"categories":categories})
+
+
