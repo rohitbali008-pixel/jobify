@@ -345,13 +345,14 @@ def courses(request):
             name=name,
             company=company,
         )
-        job= Category.objects.all()
+    job= Category.objects.all()
     context = {
         "job_data":job
     }
 
 
     return render(request,"",{"companies":companies},context)
+    
 def test(request):
     if not request.session.get('email'):
         return redirect('login')
@@ -370,7 +371,8 @@ def test(request):
         employees=Employee.objects.all()
         categories=Category.objects.all()
         if request.method=="POST":
-            job_profile=request.POST.get("job_profile")
+            print(curr_employee)
+            job_profile=Category.objects.get(id =request.POST.get("job") )
             questions=request.POST.get("questions")
             opt_a=request.POST.get("opt_a")
             opt_b=request.POST.get("opt_b")
@@ -378,7 +380,7 @@ def test(request):
             opt_d=request.POST.get("opt_d")
             answer=request.POST.get("answer")
             marks=request.POST.get("marks")
-            added_by=request.POST.get("added_by")
+            
 
             Questions.objects.create(
                 job_profile=job_profile,
@@ -389,10 +391,11 @@ def test(request):
                 opt_d=opt_d,
                 answer=answer,
                 marks=marks,
-                added_by=added_by,
+                added_by=curr_employee,
         )
     except:
         return redirect('login')
-    return render(request,"questions.html",{"employees":employees,"categories":categories})
+    jobs = Category.objects.all()
+    return render(request,"questions.html",{"employees":employees,"categories":categories, "job_data":jobs})
 
 

@@ -2,7 +2,8 @@
 {% block content %}
 
 <div class="register">
-<form class="row g-3">
+<form class="row g-3" method="post">
+    {% csrf_token %}
   
   <div class="col-12">
     <label for="inputAddress" class="form-label">question</label>
@@ -27,18 +28,27 @@
   <label for="inputCity" class="form-label">option d</label>
     <input type="text" class="form-control" name="opt_d">
   </div>
+    <div class="col-md-6">
+  <label for="inputCity" class="form-label">answer</label>
+    <input type="text" class="form-control" name="answer">
+  </div>  <div class="col-md-6">
+  <label for="inputCity" class="form-label">marks</label>
+    <input type="number" class="form-control" name="marks">
+  </div>
   <div class="col-md-4">
     <label for="inputState.
-    " class="form-label">job profile</label>
+    " class="form-label">job profile {{ job_data|length }}</label>
     <select name="job" class="form-select">
+            <option  disabled selected>-- Select job profile --</option>
+            
     {% for job in job_data %}
-      <option selected></option>....
-      <option>{{job.name}}</option>
+  
+      <option value="{{ job.id }}">{{ job.name }}</option>
       {% endfor %}
     </select>
   </div>
   <div class="col-12">
-    <button type="submit" class="btn btn-primary">Sign in</button>
+    <button type="submit" class="btn btn-primary">save question</button>
   </div>
 </form>
 </div>
