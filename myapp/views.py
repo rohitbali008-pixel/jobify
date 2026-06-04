@@ -10,6 +10,118 @@ from django.contrib import messages
 import random
 import string
 # Create your views here.
+
+BASE_TEMPLATE_CONTEXT = {"base_template": "base.html"}
+
+
+def index(request):
+    return render(request, "index.html")
+
+
+def index_2(request):
+    return render(request, "index-2.html")
+
+
+def about(request):
+    return render(request, "about.html")
+
+
+def add_resume(request):
+    return render(request, "add-resume.html")
+
+
+def base(request):
+    return render(request, "base.html")
+
+
+def blog(request):
+    return render(request, "blog.html")
+
+
+def blog_full_width(request):
+    return render(request, "blog-full-width.html")
+
+
+def blog_left_sidebar(request):
+    return render(request, "blog-left-sidebar.html")
+
+
+def bookmarked(request):
+    return render(request, "bookmarked.html")
+
+
+def browse_categories(request):
+    return render(request, "browse-categories.html")
+
+
+def browse_jobs(request):
+    return render(request, "browse-jobs.html")
+
+
+def browse_resumes(request):
+    return render(request, "browse-resumes.html")
+
+
+def change_password(request):
+    return render(request, "change-password.html")
+
+
+def contact(request):
+    return render(request, "contact.html")
+
+
+def faq(request):
+    return render(request, "faq.html")
+
+
+def job_alerts(request):
+    return render(request, "job-alerts.html")
+
+
+def job_details(request):
+    return render(request, "job-details.html")
+
+
+def job_page(request):
+    return render(request, "job-page.html")
+
+
+def manage_applications(request):
+    return render(request, "manage-applications.html")
+
+
+def manage_jobs(request):
+    return render(request, "manage-jobs.html")
+
+
+def manage_resumes(request):
+    return render(request, "manage-resumes.html")
+
+
+def notifications(request):
+    return render(request, "notifications.html")
+
+
+def post_job(request):
+    return render(request, "post-job.html")
+
+
+def pricing(request):
+    return render(request, "pricing.html")
+
+
+def privacy_policy(request):
+    return render(request, "privacy-policy.html")
+
+
+def resume(request):
+    return render(request, "resume.html")
+
+
+def single_post(request):
+    return render(request, "single-post.html")
+
+
 def create_jobs(request):
     if request.method == "POST":
         # username =   request.POST.get("username")
@@ -54,7 +166,9 @@ def register(request):
         )
         print("student data added successfully")
         return redirect('login')
-    return render(request, "register.html")
+    return render(request, "register.html", BASE_TEMPLATE_CONTEXT)
+
+    
 def login(request):
     if request.method == "POST":
         form_email     =   request.POST.get("email")
@@ -96,7 +210,7 @@ def login(request):
 
 
         
-    return render(request, "login.html")
+    return render(request, "login.html", BASE_TEMPLATE_CONTEXT)
 
 
 def  user_profile(request):

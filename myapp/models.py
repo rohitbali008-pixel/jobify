@@ -1,9 +1,7 @@
 from django.db import models
 
-# Create your models here.
 
 class User(models.Model):
-    #  = models.CharField(max_length=100, null = False)
     fullname = models.CharField(max_length=100)
     dateofbirth= models.IntegerField() 
     mobileno= models.IntegerField()
@@ -20,16 +18,7 @@ class Profile(models.Model):
     resume = models.FileField(upload_to='resumes/', blank=True, null=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile", null=True)
     gender = models.CharField(max_length=50, default="male")
-#   skills
-#     education
     experience = models.IntegerField(null=True , blank= True)
-# Name
-# company type
-# email 
-# phone 
-# locatoion
-# active models.BooleanField(_(""))
-# created at
 
     def __str__(self):
         return f"Profile of {self.user.fullname}"
