@@ -1,6 +1,6 @@
 
 from django.shortcuts import render, HttpResponse, get_object_or_404, redirect
-from .models import User , Profile , Employee, Company , Jobs, Application , Category, Questions
+from .models import User , Profile , Employee, Company , Job, Application , Category, Question
 
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.mail import send_mail
@@ -10,6 +10,8 @@ from django.contrib import messages
 import random
 import string
 # Create your views here.
+from datetime import date, datetime
+
 
 BASE_TEMPLATE_CONTEXT = {"base_template": "base.html"}
 
@@ -122,29 +124,9 @@ def single_post(request):
     return render(request, "single-post.html")
 
 
-def create_jobs(request):
-    if request.method == "POST":
-        # username =   request.POST.get("username")
-        fullname =   request.POST.get("fullname")
-        email =      request.POST.get("email")
-        mobileno =     request.POST.get("mobileno")
-        dateofbirth =        request.POST.get("dateofbirth")
-        address =    request.POST.get("address")
-        password=   request.POST.get("password")
  
-        User.objects.create(
-            
-            fullname =fullname,
-            
-            email =   email,
-            mobileno= mobileno, 
-            dateofbirth =     dateofbirth,
-            address = address,
-            password =password
-        )
-        print("student data added successfully")
 
-    return render(request, "createjobs.html")
+
 def register(request):
     if request.method == "POST":
         # username =   request.POST.get("username")
@@ -152,19 +134,42 @@ def register(request):
         email =      request.POST.get("email")
         mobileno =     request.POST.get("mobileno")
         dateofbirth =       request.POST.get("dateofbirth")
-        address =    request.POST.get("address")
+        # address =    request.POST.get("address")
         password =   request.POST.get("password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match")
+            return redirect('register')
  
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered")
+            return redirect('register')
+        
+        if dateofbirth:
+            dob = datetime.strptime(dateofbirth, "%Y-%m-%d").date()
+            today = date.today()
+
+            age = today.year - dob.year - (
+                (today.month, today.day) < (dob.month, dob.day)
+            )
+
+            if age < 18:
+                messages.error(request, "You must be at least 18 years old to register.")
+                return redirect('register')
+            
+
         User.objects.create(
             
             fullname =fullname,
             email =   email,
             mobileno = mobileno, 
             dateofbirth =     dateofbirth,
-            address = address,
+            # address = address,
             password= make_password(password)
         )
         print("student data added successfully")
+        messages.success(request, "Registration successful. Please login.")
         return redirect('login')
     return render(request, "register.html", BASE_TEMPLATE_CONTEXT)
 
@@ -180,11 +185,11 @@ def login(request):
 
             if user:
              
-                if password == user.password:
+                if check_password(password, user.password) or password == user.password:
                 
                     request.session["fullname"] =user.fullname
                     request.session["email"] = user.email
-                    return redirect('user_profile')
+                    return redirect('index')
                 else:
                     messages.error(request, "Invalid Password")
                     return redirect('login')
@@ -203,13 +208,10 @@ def login(request):
             except:
 
                 print("employee not found")
+                messages.error(request, "Invalid email or password")
                 return redirect('login')
             return redirect('register')
           
-      
-
-
-        
     return render(request, "login.html", BASE_TEMPLATE_CONTEXT)
 
 
@@ -231,7 +233,7 @@ def  user_profile(request):
         "user_data":user
     }
 
-    return render(request, "userprofile.html", context)
+    return render(request, "index.html", context)
 
 def  employee_profile(request):
     if not request.session.get('email'):
@@ -265,36 +267,38 @@ def  employee_profile(request):
 
     return render(request, "employeeprofile.html", context)
 
-def show_user(request):
-    users =  User.objects.all()
+ 
 
-    context = {
-        "user_data":users
-    }
-    return render(request, "show_user.html", context)
+
+
 # def reset_password(request):
 #     if request.method=="POST":
 #         email = request.POST.get('email')
-        # try:
-        #     student = Student.objects.get(email = email)
+#         try:
+#             student = Student.objects.get(email = email)
 
-        #     characters = string.ascii_letters+string.digits
-        #     new_password=""
-        #     for i in range(1,9):
-        #         new_password += "".join(random.choices(characters))
+#             characters = string.ascii_letters+string.digits
+#             new_password=""
+#             for i in range(1,9):
+#                 new_password += "".join(random.choices(characters))
 
-        #     student.password = make_password(new_password)
-        #     student.save()
-        #     send_mail(
-        #         'New Password',
-        #         f'Your new password is {new_password}',
-        #         'rohitbali008@gmail.com',
-        #         [email]
-        #     )
-        # except:
-        #     print("invalid mail")
-            
-    return redirect('login')
+#             student.password = make_password(new_password)
+#             student.save()
+#             send_mail(
+#                 'New Password',
+#                 f'Your new password is {new_password}',
+#                 'rohitbali008@gmail.com',
+#                 [email]
+#             )
+#         except:
+#             print("invalid mail")
+        
+#     return redirect('login')
+
+
+
+
+
 def add_employee(request):
     companies = Company.objects.all()
     if request.method == "POST":
@@ -318,7 +322,13 @@ def add_employee(request):
         )
         print("student data added successfully")
         return redirect('login')
+
     return render(request, "add_employee.html", {"companies":companies})
+
+
+
+
+
 def vacancy(request):
     
     if not request.session.get('email'):
@@ -352,7 +362,7 @@ def vacancy(request):
             vacancies =   request.POST.get("vacancies")
             location  = request.POST.get("location")
 
-            Jobs.objects.create(
+            Job.objects.create(
                 title=title,
                 experience=experience,
                 discription=discription,
@@ -371,15 +381,19 @@ def vacancy(request):
     except:
         return redirect('login')
         
-    return render(request, "vacancy.html")
+    return render(request, "dashboard.html")
+
+
+
     
 def logout(request):
     request.session.flush()
     return redirect('login')
 
+
 def cards(request):
 
-    vacancies = Jobs.objects.all()
+    vacancies = Job.objects.all()
     return render(request ,"cards.html", {"vacancies":vacancies})
 
 
@@ -399,7 +413,7 @@ def eligibility(request, id):
             return redirect('login')
         
 
-        curr_job = Jobs.objects.get(id = id)
+        curr_job = Job.objects.get(id = id)
 
         print(curr_user)
         print(curr_job)
@@ -440,13 +454,13 @@ def eligibility(request, id):
 def card_list(request):
     query = request.GET.get('q')
     if query:
-        jobs = Jobs.objects.filter(
+        jobs = Job.objects.filter(
             Q(title__icontains=query) |
             Q(description__icontains=query) |
             Q(tags__icontains=query)
         )
     else:
-        jobs = Jobs.objects.all()
+        jobs = Job.objects.all()
     return render(request, 'cards.html', {'cards': cards})
 def side(request):
     return render(request,'base2.html')
@@ -463,9 +477,9 @@ def courses(request):
     context = {
         "job_data":job
     }
-
-
     return render(request,"",{"companies":companies},context)
+
+
     
 def test(request):
     if not request.session.get('email'):
@@ -496,7 +510,7 @@ def test(request):
             marks=request.POST.get("marks")
             
 
-            Questions.objects.create(
+            Question.objects.create(
                 job_profile=job_profile,
                 questions=questions,
                 opt_a=opt_a,

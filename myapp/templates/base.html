@@ -9,7 +9,11 @@
     <meta name="keywords" content="Bootstrap, Landing page, Template, Registration, Landing" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
     <meta name="author" content="UIdeck" />
-    <title>JobX - Bootstrap HTML5 Job Portal Template</title>
+    <title>
+      {% block title %}
+        interviewIQ - a smart hiring platform
+      {% endblock %}
+    </title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
@@ -20,9 +24,131 @@
     <link rel="stylesheet" href="/static/css/animate.css" />
     <link rel="stylesheet" href="/static/css/main.css" />
     <link rel="stylesheet" href="/static/css/responsive.css" />
+    <style>
+      .toast-alert-wrapper {
+        position: fixed;
+        top: 88px;
+        right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: min(360px, calc(100vw - 32px));
+        pointer-events: none;
+      }
+      
+      .toast-alert {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        min-height: 64px;
+        padding: 16px 48px 16px 18px;
+        border-radius: 6px;
+        color: #ffffff;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.4;
+        box-shadow: 0 14px 34px rgba(16, 24, 40, 0.28);
+        opacity: 0;
+        transform: translateX(120%);
+        transition: transform 0.45s ease, opacity 0.45s ease;
+        pointer-events: auto;
+        overflow: hidden;
+      }
+      
+      .toast-alert.is-visible {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      
+      .toast-alert.is-hiding {
+        opacity: 0;
+        transform: translateX(120%);
+      }
+      
+      .toast-alert-success {
+        background: #16803c;
+        border-left: 6px solid #7ee2a8;
+      }
+      
+      .toast-alert-error {
+        background: #c92a2a;
+        border-left: 6px solid #ff9b9b;
+      }
+      
+      .toast-alert-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 24px;
+        width: 24px;
+        height: 24px;
+        margin-top: 1px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        font-size: 14px;
+        font-weight: 700;
+      }
+      
+      .toast-alert-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 30px;
+        height: 30px;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+        font-size: 22px;
+        line-height: 28px;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+      
+      .toast-alert-close:hover,
+      .toast-alert-close:focus {
+        background: rgba(255, 255, 255, 0.3);
+        outline: none;
+        transform: scale(1.05);
+      }
+      
+      @media (max-width: 575px) {
+        .toast-alert-wrapper {
+          top: 76px;
+          right: 16px;
+          left: 16px;
+          width: auto;
+        }
+      }
+    </style>
   </head>
 
   <body>
+    {% if messages %}
+      <div class="toast-alert-wrapper" aria-live="polite" aria-atomic="true">
+        {% for message in messages %}
+          <div class="toast-alert {% if 'success' in message.tags %}
+              toast-alert-success
+            {% else %}
+              toast-alert-error
+            {% endif %}"
+            role="alert">
+            <span class="toast-alert-icon">
+              {% if 'success' in message.tags %}
+                ✓
+              {% else %}
+                !
+              {% endif %}
+            </span>
+            <span>{{ message }}</span>
+            <button type="button" class="toast-alert-close" aria-label="Close alert">&times;</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     <!-- Header Section Start -->
     <header id="home" class="hero-area">
       <!-- Navbar Start -->
@@ -37,12 +163,12 @@
                 <span class="lni-menu"></span>
                 <span class="lni-menu"></span>
               </button>
-              <a href="/index-2/" class="navbar-brand"><img src="/static/img/logo.png" alt="" /></a>
+              <a href="/index/" class="navbar-brand"><img src="/static/img/logo.png" alt="" style="height:30px;" /></a>
             </div>
             <div class="collapse navbar-collapse" id="main-navbar">
               <ul class="navbar-nav mr-auto w-100 justify-content-end">
                 <li class="nav-item">
-                  <a class="nav-link" href="/index-2/">Home</a>
+                  <a class="nav-link" href="/index/">Home</a>
                 </li>
                 <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Pages</a>
@@ -140,9 +266,18 @@
             </div>
           </div>
         </div>
-        <div class="mobile-menu" data-logo="/static/img/logo-mobile.png"></div>
+        <style>
+          .mobile-menu img {
+            margin: 8px 0;
+            width: 150px; /* Change to your desired width */
+          }
+        </style>
+        <div class="mobile-menu" data-logo="/static/img/logo.png"></div>
       </nav>
       <!-- Navbar End -->
+      {% block hero %}
+
+      {% endblock %}
     </header>
     <!-- Header Section End -->
 
@@ -158,7 +293,7 @@
             <div class="col-lg-3 col-md-3 col-xs-12">
               <div class="widget">
                 <div class="footer-logo">
-                  <img src="/static/img/logo-footer.png" alt="" />
+                  <img src="/static/img/logo.png" alt="" style="height:30px; filter: grayscale(100%);   filter: invert(100%);   " />
                 </div>
                 <div class="textwidget">
                   <p>Sed consequat sapien faus quam bibendum convallis quis in nulla. Pellentesque volutpat odio eget diam cursus semper.</p>
@@ -268,5 +403,35 @@
     <script src="/static/js/form-validator.min.js"></script>
     <script src="/static/js/contact-form-script.js"></script>
     <script src="/static/js/main.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var toasts = document.querySelectorAll('.toast-alert')
+      
+        toasts.forEach(function (toast) {
+          var closeButton = toast.querySelector('.toast-alert-close')
+          var closeToast = function () {
+            if (toast.classList.contains('is-hiding')) {
+              return
+            }
+      
+            toast.classList.remove('is-visible')
+            toast.classList.add('is-hiding')
+            window.setTimeout(function () {
+              toast.remove()
+            }, 500)
+          }
+      
+          window.setTimeout(function () {
+            toast.classList.add('is-visible')
+          }, 100)
+      
+          window.setTimeout(closeToast, 30000)
+      
+          if (closeButton) {
+            closeButton.addEventListener('click', closeToast)
+          }
+        })
+      })
+    </script>
   </body>
 </html>

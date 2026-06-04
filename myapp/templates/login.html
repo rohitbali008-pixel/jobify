@@ -1,4 +1,4 @@
-{% extends base_template %}
+{% extends "base.html" %}
 {% load static %}
 
 {% block content %}
@@ -23,28 +23,29 @@
         <div class="col-lg-5 col-md-6 col-xs-12">
           <div class="page-login-form box">
             <h3>Login</h3>
-            <form class="login-form">
+            <form class="login-form" method="post" action="{% url 'login' %}">
+              {% csrf_token %}
               <div class="form-group">
                 <div class="input-icon">
-                  <i class="lni-user"></i>
-                  <input type="text" id="sender-email" class="form-control" name="email" placeholder="Username" />
+                  <i class="lni-envelope"></i>
+                  <input type="email" id="sender-email" class="form-control" name="email" placeholder="Email Address" required />
                 </div>
               </div>
               <div class="form-group">
                 <div class="input-icon">
                   <i class="lni-lock"></i>
-                  <input type="password" class="form-control" placeholder="Password" />
+                  <input type="password" class="form-control" name="password" placeholder="Password" required />
                 </div>
               </div>
               <div class="form-group form-check">
                 <input type="checkbox" class="form-check-input" id="exampleCheck1" />
                 <label class="form-check-label" for="exampleCheck1">Keep Me Signed In</label>
               </div>
-              <button class="btn btn-common log-btn">Submit</button>
+              <button type="submit" class="btn btn-common log-btn">Submit</button>
             </form>
             <ul class="form-links">
               <li class="text-center">
-                <a href="/register/">Don't have an account?</a>
+                <a href="{% url 'register' %}">Don't have an account?</a>
               </li>
             </ul>
           </div>
