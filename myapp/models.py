@@ -94,12 +94,12 @@ class Job(models.Model):
         return self.title
     
 class Application(models.Model):
-
+ 
     job_id = models.ForeignKey(Job , on_delete=models.CASCADE, related_name="jobs")
     user_id =models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     resume = models.FileField(upload_to='media/', blank=True, null=True)
     skills = models.CharField(max_length=100)
-    experience=models.IntegerField()
+    experience = models.IntegerField(default=0)
     apply_date=models.DateTimeField()
     status = models.CharField(
         max_length=50,
@@ -118,10 +118,21 @@ class Application(models.Model):
     def __str__(self):
         return f"{self.user_id.fullname} - {self.job_id.title}" 
     
+ 
+
+
+
+
+
 
 class Category(models.Model):
+    logo = models.ImageField(upload_to='cat_logo/', blank=True, null=True)
     name=models.CharField(max_length=100)
     company=models.ForeignKey(Company , on_delete=models.CASCADE, related_name="company")
+
+
+    def __str__(self):
+        return f"{self.name}" 
 
 
 class Question(models.Model):
@@ -136,5 +147,35 @@ class Question(models.Model):
     added_by=models.ForeignKey(Employee,on_delete=models.SET_NULL,null=True, related_name="employee")
     
 
+class Test(models.Model):
+    title = models.CharField(max_length=100)
+    category = models.ForeignKey( Category,on_delete=models.CASCADE)
+    questions = models.ManyToManyField(Question)
+    duration_minutes = models.IntegerField()
+    total_marks = models.IntegerField()
+    passing_marks = models.IntegerField()
+    created_by = models.ForeignKey(Employee,on_delete=models.SET_NULL,null=True)
+    created_at = models.DateTimeField( auto_now_add=True )
 
+    def __str__(self):
+        return self.title
 
+class TestAssignment(models.Model):
+
+    application = models.ForeignKey( Application, on_delete=models.CASCADE )
+    test = models.ForeignKey( Test, on_delete=models.CASCADE )
+    score = models.IntegerField(default=0 )
+    percentage = models.FloatField(default=0 )
+    assigned_on = models.DateTimeField(auto_now_add=True )
+    completed_on = models.DateTimeField( null=True,blank=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=(
+            ('Pending','Pending'),
+            ('Completed','Completed'),
+            ('Expired','Expired'),
+        ),default='Pending' )
+
+    def __str__(self):
+        return f"{self.application.user_id.fullname}"

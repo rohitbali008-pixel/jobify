@@ -14,14 +14,45 @@ from datetime import date, datetime
 
 
 BASE_TEMPLATE_CONTEXT = {"base_template": "base.html"}
+DESIGNATION_CHOICES = Employee._meta.get_field("designation").choices
+ROLE_CHOICES = Employee._meta.get_field("role").choices
+APPLICATION_STATUS_CHOICES = Application._meta.get_field("status").choices
+
+
+def get_current_employee(request):
+    session_email = request.session.get("email")
+    if not session_email:
+        return None
+    try:
+        return Employee.objects.get(email=session_email)
+    except Employee.DoesNotExist:
+        return None
+
+
+def dashboard_context(current_employee, **kwargs):
+    context = {"current_employee": current_employee}
+    context.update(kwargs)
+    return context
 
 
 def index(request):
-    return render(request, "index.html")
+    categories = Category.objects.select_related("company").order_by("name")[:8]
+    featured_jobs = Job.objects.select_related("created_by__company").order_by("-id")[:6]
+    latest_jobs = Job.objects.select_related("created_by__company").order_by("-id")[:6]
+    context = {
+        "categories": categories,
+        "featured_jobs": featured_jobs,
+        "latest_jobs": latest_jobs,
+        "base_template": "base.html",
+    }
+    return render(request, "index.html", context)
 
 
-def index_2(request):
-    return render(request, "index-2.html")
+def dashboard(request):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
+        return redirect('login')
+    return render(request, "dashboard.html", dashboard_context(curr_employee))
 
 
 def about(request):
@@ -65,7 +96,58 @@ def browse_resumes(request):
 
 
 def change_password(request):
-    return render(request, "change-password.html")
+    curr_employee = get_current_employee(request)
+    if curr_employee:
+        if request.method == "POST":
+            current_password = request.POST.get("current_password")
+            new_password = request.POST.get("new_password")
+            confirm_password = request.POST.get("confirm_password")
+
+            if not (check_password(current_password, curr_employee.password) or current_password == curr_employee.password):
+                messages.error(request, "Current password is incorrect")
+                return redirect('change_password')
+
+            if new_password != confirm_password:
+                messages.error(request, "New passwords do not match")
+                return redirect('change_password')
+
+            curr_employee.password = make_password(new_password)
+            curr_employee.save()
+            messages.success(request, "Password changed successfully")
+            return redirect('change_password')
+
+        return render(request, "change-password.html", {"user_type": "employee"})
+
+    session_email = request.session.get("email")
+    user = None
+    if session_email:
+        try:
+            user = User.objects.get(email=session_email)
+        except User.DoesNotExist:
+            user = None
+
+    if not user:
+        return redirect('login')
+
+    if request.method == "POST":
+        current_password = request.POST.get("current_password")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if not (check_password(current_password, user.password) or current_password == user.password):
+            messages.error(request, "Current password is incorrect")
+            return redirect('change_password')
+
+        if new_password != confirm_password:
+            messages.error(request, "New passwords do not match")
+            return redirect('change_password')
+
+        user.password = make_password(new_password)
+        user.save()
+        messages.success(request, "Password changed successfully")
+        return redirect('change_password')
+
+    return render(request, "change-password.html", {"user_type": "user"})
 
 
 def contact(request):
@@ -80,8 +162,18 @@ def job_alerts(request):
     return render(request, "job-alerts.html")
 
 
-def job_details(request):
-    return render(request, "job-details.html")
+def job_details(request, id):
+    job = get_object_or_404(Job, id=id)
+    skills_list = [skill.strip() for skill in job.skills.split(',') if skill.strip()]
+    experience_choices = Profile._meta.get_field("experience").choices
+    similar_jobs = Job.objects.exclude(id=job.id).order_by("-id")[:4]
+    context = {
+        "job": job,
+        "skills_list": skills_list,
+        "experience_choices": experience_choices,
+        "similar_jobs": similar_jobs,
+    }
+    return render(request, "job-details.html", context)
 
 
 def job_page(request):
@@ -200,11 +292,11 @@ def login(request):
             try:
                 employee = Employee.objects.get(email = form_email )
 
-                if password == employee.password:
+                if check_password(password, employee.password) or password == employee.password:
 
                     request.session["fullname"] = employee.fullname
                     request.session["email"] = employee.email
-                    return redirect('vacancy')
+                    return redirect('dashboard')
             except:
 
                 print("employee not found")
@@ -236,152 +328,295 @@ def  user_profile(request):
     return render(request, "index.html", context)
 
 def  employee_profile(request):
-    if not request.session.get('email'):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
         return redirect('login')
-    
-    session_email = request.session.get('email')
 
-    if not session_email:
-        return redirect('login')
-    try:
+    if request.method == "POST":
+        form_type = request.POST.get("form_type")
 
-        curr_employee = Employee.objects.get(email = session_email)
+        if form_type == "password":
+            current_password = request.POST.get("current_password")
+            new_password = request.POST.get("new_password")
+            confirm_password = request.POST.get("confirm_password")
 
-        if request.method == "POST":
-            username =  request.POST.get("username")
-            avatar =    request.FILES.get("avatar") 
-            resume =    request.FILES.get("resume")
+            if not (check_password(current_password, curr_employee.password) or current_password == curr_employee.password):
+                messages.error(request, "Current password is incorrect")
+                return redirect('employee_profile')
 
-            Profile.objects.create(
-                username = username,
-                profile_pic =  avatar,
-                resume =  resume
-        )
+            if new_password != confirm_password:
+                messages.error(request, "New passwords do not match")
+                return redirect('employee_profile')
 
-        employee= Profile.objects.all()
-        context = {
-            "employee_data":employee
+            curr_employee.password = make_password(new_password)
+            curr_employee.save()
+            messages.success(request, "Password changed successfully")
+            return redirect('employee_profile')
+
+        email = request.POST.get("email")
+        if email != curr_employee.email and Employee.objects.filter(email=email).exists():
+            messages.error(request, "Email already exists")
+            return redirect('employee_profile')
+
+        curr_employee.fullname = request.POST.get("fullname")
+        curr_employee.email = email
+        curr_employee.phone = request.POST.get("phone")
+
+        profile_pic = request.FILES.get("profile_pic")
+        if profile_pic:
+            curr_employee.profile_pic = profile_pic
+
+        curr_employee.save()
+        request.session["fullname"] = curr_employee.fullname
+        request.session["email"] = curr_employee.email
+        messages.success(request, "Profile updated successfully")
+        return redirect('employee_profile')
+
+    context = {
+        "employee": curr_employee,
     }
-    except:
-        return redirect('login')
+    return render(request, "employee_profile.html", dashboard_context(curr_employee, **context))
 
-    return render(request, "employeeprofile.html", context)
+ 
 
  
 
 
 
-# def reset_password(request):
-#     if request.method=="POST":
-#         email = request.POST.get('email')
-#         try:
-#             student = Student.objects.get(email = email)
 
-#             characters = string.ascii_letters+string.digits
-#             new_password=""
-#             for i in range(1,9):
-#                 new_password += "".join(random.choices(characters))
+def view_employees(request):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
+        return redirect('login')
 
-#             student.password = make_password(new_password)
-#             student.save()
-#             send_mail(
-#                 'New Password',
-#                 f'Your new password is {new_password}',
-#                 'rohitbali008@gmail.com',
-#                 [email]
-#             )
-#         except:
-#             print("invalid mail")
-        
-#     return redirect('login')
+    employees = Employee.objects.filter(company=curr_employee.company).order_by("-id")
+    return render(request, "view_employees.html", dashboard_context(curr_employee, employees=employees))
 
 
+def update_employee(request, employee_id):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
+        return redirect('login')
+
+    employee = get_object_or_404(Employee, id=employee_id, company=curr_employee.company)
+
+    if request.method == "POST":
+        employee.fullname = request.POST.get("fullname")
+        employee.email = request.POST.get("email")
+        employee.phone = request.POST.get("phone")
+        employee.designation = request.POST.get("designation")
+        employee.role = request.POST.get("role")
+        employee.sallary = request.POST.get("sallary")
+        employee.joiningdate = request.POST.get("joiningdate")
+
+        profile_pic = request.FILES.get("profile_pic")
+        if profile_pic:
+            employee.profile_pic = profile_pic
+
+        employee.save()
+        messages.success(request, "Employee updated successfully")
+        return redirect('view_employees')
+
+    context = {
+        "employee": employee,
+        "designation_choices": DESIGNATION_CHOICES,
+        "role_choices": ROLE_CHOICES,
+    }
+    return render(request, "update_employee.html", dashboard_context(curr_employee, **context))
 
 
 
 def add_employee(request):
-    companies = Company.objects.all()
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
+        return redirect('login')
+
     if request.method == "POST":
         designation =   request.POST.get("designation")
         fullname =   request.POST.get("fullname")
         email =      request.POST.get("email")
+        phone =      request.POST.get("phone")
+        role =      request.POST.get("role")
         sallary =     request.POST.get("sallary")
         joiningdate =  request.POST.get("dateofjoining")
-        company_id =    request.POST.get("company_id")
         password =   request.POST.get("password")
-        company = Company.objects.get(id = company_id)
+
+        if Employee.objects.filter(email=email).exists():
+            messages.error(request, "Employee email already exists")
+            return redirect('add_employee')
+
         Employee.objects.create(
             
             fullname =fullname,
             email =   email,
+            phone =   phone,
             joiningdate= joiningdate,
-            company = company,
-            password= password,
+            company = curr_employee.company,
+            password= make_password(password),
             designation= designation,
+            role= role or "Employee",
             sallary= sallary
         )
-        print("student data added successfully")
-        return redirect('login')
+        messages.success(request, "Employee added successfully")
+        return redirect('add_employee')
 
-    return render(request, "add_employee.html", {"companies":companies})
+    return render(request, "add_employee.html", dashboard_context(
+        curr_employee,
+        company=curr_employee.company,
+        designation_choices=DESIGNATION_CHOICES,
+        role_choices=ROLE_CHOICES,
+    ))
 
 
 
 
 
 def vacancy(request):
-    
-    if not request.session.get('email'):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
         return redirect('login')
-    
-    session_email = request.session.get('email')
 
-    if not session_email:
+    if request.method == "POST":
+        Job.objects.create(
+            title=request.POST.get("title"),
+            experience=request.POST.get("experience"),
+            discription=request.POST.get("discription"),
+            skills=request.POST.get("skills"),
+            qualification=request.POST.get("qualification"),
+            minsalary=request.POST.get("minsalary"),
+            maxsalary=request.POST.get("maxsalary"),
+            created_by=curr_employee,
+            deadline=request.POST.get("deadline"),
+            vacancies=request.POST.get("vacancies"),
+            location=request.POST.get("location"),
+        )
+        messages.success(request, "Vacancy created successfully")
+        return redirect('vacancy')
+
+    jobs = Job.objects.filter(created_by=curr_employee).order_by("-id")
+    return render(request, "vacancy.html", dashboard_context(curr_employee, jobs=jobs))
+
+
+def view_applications(request):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
         return redirect('login')
-    try:
 
-        curr_employee = Employee.objects.get(email = session_email)
-        
-        print(curr_employee)
-        if not curr_employee:
-            return redirect('login')
-        
-
-        if request.method == "POST":
-            print(curr_employee)
-            title=   request.POST.get("title")
-            experience =   request.POST.get("experience")
-            discription =      request.POST.get("discription")
-            
-            education =  request.POST.get("education")
-            skills= request.POST.get("skills")
-            minsalary =    request.POST.get("minsalary")
-            maxsalary =   request.POST.get("maxsalary")
-        
-            deadline=   request.POST.get("deadline")
-            vacancies =   request.POST.get("vacancies")
-            location  = request.POST.get("location")
-
-            Job.objects.create(
-                title=title,
-                experience=experience,
-                discription=discription,
-                
-                skills = skills ,
-                education=education,
-                minsalary=minsalary,
-                maxsalary=maxsalary,
-                created_by=curr_employee,
-
-                deadline=deadline,
-                vacancies=vacancies,
-                location=location,
-
+    if request.method == "POST":
+        if request.POST.get("auto_shortlist"):
+            from .utils import generate_job_scores
+            applications = Application.objects.select_related("job_id", "user_id").filter(
+                job_id__created_by=curr_employee
             )
-    except:
+            for job in Job.objects.filter(created_by=curr_employee):
+                generate_job_scores(job)
+            messages.success(request, "ATS scoring and auto-shortlisting completed")
+            return redirect('view_applications')
+
+        application = get_object_or_404(Application, id=request.POST.get("application_id"))
+        application.status = request.POST.get("status")
+        application.save()
+        messages.success(request, "Application status updated")
+        return redirect('view_applications')
+
+    applications = Application.objects.select_related("job_id", "user_id").filter(
+        job_id__created_by=curr_employee
+    ).order_by("-applied_on", "-id")
+    return render(request, "view_applications.html", dashboard_context(
+        curr_employee,
+        applications=applications,
+        status_choices=APPLICATION_STATUS_CHOICES,
+    ))
+
+
+def shortlisted_list(request):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
         return redirect('login')
-        
-    return render(request, "dashboard.html")
+
+    applications = Application.objects.select_related("job_id", "user_id").filter(
+        job_id__created_by=curr_employee,
+        status="Shortlisted",
+    ).order_by("-applied_on", "-id")
+    return render(request, "shortlisted_list.html", dashboard_context(curr_employee, applications=applications))
+
+
+def scheduled_interview(request):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
+        return redirect('login')
+
+    applications = Application.objects.select_related("job_id", "user_id").filter(
+        job_id__created_by=curr_employee,
+        status="Shortlisted",
+    ).order_by("-applied_on", "-id")
+
+    if request.method == "POST":
+        application = get_object_or_404(applications, id=request.POST.get("application_id"))
+        interview_date = request.POST.get("interview_date")
+        interview_time = request.POST.get("interview_time")
+        meeting_place = request.POST.get("meeting_place")
+        applicant_name = application.user_id.fullname if application.user_id else "Unknown applicant"
+        messages.success(
+            request,
+            f"Interview scheduled for {applicant_name} on {interview_date} at {interview_time}. Venue: {meeting_place}",
+        )
+        return redirect('scheduled_interview')
+
+    return render(request, "scheduled_interview.html", dashboard_context(curr_employee, applications=applications))
+
+
+def create_test(request):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
+        return redirect('login')
+
+    companies = Company.objects.all()
+    if request.method == "POST":
+        company = get_object_or_404(Company, id=request.POST.get("company_id"))
+        Category.objects.create(
+            name=request.POST.get("name"),
+            company=company,
+        )
+        messages.success(request, "Test created successfully")
+        return redirect('create_test')
+
+    categories = Category.objects.select_related("company").order_by("-id")
+    return render(request, "create_test.html", dashboard_context(
+        curr_employee,
+        companies=companies,
+        categories=categories,
+    ))
+
+
+def add_question(request):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
+        return redirect('login')
+
+    categories = Category.objects.all().order_by("name")
+    if request.method == "POST":
+        job_profile = get_object_or_404(Category, id=request.POST.get("job"))
+        Question.objects.create(
+            job_profile=job_profile,
+            questions=request.POST.get("questions"),
+            opt_a=request.POST.get("opt_a"),
+            opt_b=request.POST.get("opt_b"),
+            opt_c=request.POST.get("opt_c"),
+            opt_d=request.POST.get("opt_d"),
+            answer=request.POST.get("answer"),
+            marks=request.POST.get("marks"),
+            added_by=curr_employee,
+        )
+        messages.success(request, "Question added successfully")
+        return redirect('add_question')
+
+    questions = Question.objects.select_related("job_profile").order_by("-id")
+    return render(request, "add_question.html", dashboard_context(
+        curr_employee,
+        categories=categories,
+        questions=questions,
+    ))
 
 
 
@@ -424,27 +659,23 @@ def eligibility(request, id):
             resume =   request.FILES.get("resume")
             skills=   request.POST.get("skills")
             experience =      request.POST.get("experience")
-            current_salary =     request.POST.get("current_salary")
             apply_date =  request.POST.get("apply_date")
             job_id =   curr_job
             status =   request.POST.get("status")
             user_id = curr_user
-            education=request.POST.get("education")
 
             print()
             Application.objects.create(
-            
-            
                 resume =resume,
-                skills=   skills,
+                skills=   ", ".join(request.POST.getlist("skills")),
                 experience= experience,
-                current_salary= current_salary,
-                apply_date= apply_date,
-                education=education,
-                status= status,
+                apply_date= request.POST.get("apply_date") or datetime.now(),
+                status= status or "Under Review",
                 job_id=job_id,
                 user_id=user_id,
-                )
+            )
+        messages.success(request, "Application submitted successfully")
+        return redirect('job_details', id=curr_job.id)
     except Exception as e:
         print(e)
         return redirect('login')
@@ -482,48 +713,6 @@ def courses(request):
 
     
 def test(request):
-    if not request.session.get('email'):
-        return redirect('login')
-    
-    session_email = request.session.get('email')
-
-    if not session_email:
-        return redirect('login')
-    try:
-
-        curr_employee = Employee.objects.get(email = session_email)
-        
-        print(curr_employee)
-        if not curr_employee:
-            return redirect('login')
-        employees=Employee.objects.all()
-        categories=Category.objects.all()
-        if request.method=="POST":
-            print(curr_employee)
-            job_profile=Category.objects.get(id =request.POST.get("job") )
-            questions=request.POST.get("questions")
-            opt_a=request.POST.get("opt_a")
-            opt_b=request.POST.get("opt_b")
-            opt_c=request.POST.get("opt_c")
-            opt_d=request.POST.get("opt_d")
-            answer=request.POST.get("answer")
-            marks=request.POST.get("marks")
-            
-
-            Question.objects.create(
-                job_profile=job_profile,
-                questions=questions,
-                opt_a=opt_a,
-                opt_b=opt_b,
-                opt_c=opt_c,
-                opt_d=opt_d,
-                answer=answer,
-                marks=marks,
-                added_by=curr_employee,
-        )
-    except:
-        return redirect('login')
-    jobs = Category.objects.all()
-    return render(request,"questions.html",{"employees":employees,"categories":categories, "job_data":jobs})
+    return add_question(request)
 
 

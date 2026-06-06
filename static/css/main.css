@@ -31,6 +31,7 @@ Domain Path:      /languages/
    IMPORT GOOGLE FONTS
    ========================================================================== */
 @import url("https://fonts.googleapis.com/css?family=Open+Sans|Poppins:500,700");
+
 /* ==========================================================================
    GENERAL
    ========================================================================== */
@@ -55,7 +56,8 @@ p {
   margin-bottom: 0;
 }
 
-a:hover, a:focus {
+a:hover,
+a:focus {
   color: #00BCD4;
 }
 
@@ -67,7 +69,11 @@ a {
   transition: all 0.3s ease-in-out;
 }
 
-h1, h2, h3, h4, h5 {
+h1,
+h2,
+h3,
+h4,
+h5 {
   font-family: 'Poppins', sans-serif;
   font-size: 40px;
   font-weight: 700;
@@ -93,7 +99,8 @@ a:not([href]):not([tabindex]) {
   color: #fff;
 }
 
-a:not([href]):not([tabindex]):focus, a:not([href]):not([tabindex]):hover {
+a:not([href]):not([tabindex]):focus,
+a:not([href]):not([tabindex]):hover {
   color: #fff;
 }
 
@@ -348,7 +355,7 @@ button:focus {
   color: #333;
 }
 
-.page-header .breadcrumbs > li:before {
+.page-header .breadcrumbs>li:before {
   position: absolute;
   left: 9px;
   top: 11px;
@@ -538,7 +545,8 @@ button:focus {
   margin: 0 auto;
 }
 
-#loader-1:before, #loader-1:after {
+#loader-1:before,
+#loader-1:after {
   content: "";
   position: absolute;
   top: -10px;
@@ -566,6 +574,7 @@ button:focus {
     -o-transform: rotate(0deg);
     transform: rotate(0deg);
   }
+
   100% {
     -webkit-transform: rotate(360deg);
     -ms-transform: rotate(360deg);
@@ -608,7 +617,7 @@ button:focus {
 }
 
 .navbar-brand img {
-  width: 80%;
+  width: 100%;
 }
 
 .top-nav-collapse {
@@ -666,7 +675,7 @@ button:focus {
 }
 
 .navbar-expand-lg .navbar-nav li a:hover,
-.navbar-expand-lg .navbar-nav li .active > a,
+.navbar-expand-lg .navbar-nav li .active>a,
 .navbar-expand-lg .navbar-nav li a:focus {
   color: #00BCD4;
   outline: none;
@@ -747,7 +756,8 @@ button:focus {
   color: #fff !important;
 }
 
-.dropdown-item.active, .dropdown-item:active {
+.dropdown-item.active,
+.dropdown-item:active {
   background: transparent;
 }
 
@@ -894,30 +904,38 @@ button:focus {
     display: block;
     width: 100%;
   }
+
   .theme-header {
     display: none;
   }
+
   .mobile-menu {
     width: 100%;
   }
+
   .dropdown-menu {
     position: relative;
     background: transparent;
   }
+
   .dropdown:hover .dropdown-menu {
     position: relative;
     background: transparent;
   }
+
   .dropdown .dropdown-menu .dropdown-item {
     border-radius: 0px;
   }
+
   .dropdown-menu:before {
     display: none;
   }
+
   .navbar-expand-lg .navbar-nav .nav-link {
     padding: 0;
     line-height: 22px;
   }
+
   .top-nav-collapse .navbar-nav .nav-link {
     color: #9a9a9a !important;
   }
@@ -1014,7 +1032,7 @@ button:focus {
   height: 46px;
 }
 
-.job-search-form .search-category-container .styled-select > select {
+.job-search-form .search-category-container .styled-select>select {
   background: transparent;
   font-size: 14px;
   line-height: 25px;
@@ -1129,7 +1147,7 @@ button:focus {
   height: 100%;
 }
 
-#download .download-wrapper > div {
+#download .download-wrapper>div {
   vertical-align: middle;
   display: table-cell;
 }
@@ -1557,7 +1575,7 @@ button:focus {
   height: 100%;
 }
 
-#browse-jobs .text-wrapper > div {
+#browse-jobs .text-wrapper>div {
   vertical-align: middle;
   display: table-cell;
 }
@@ -3155,7 +3173,7 @@ Categories All Page Style
   border-radius: 4px;
 }
 
-.styled-select > select {
+.styled-select>select {
   background: transparent;
   font-size: 14px;
   line-height: 18px;
@@ -3299,11 +3317,13 @@ label {
   animation-name: fadeIn;
 }
 
-#carousel-area .carousel-control-next, #carousel-area .carousel-control-prev {
+#carousel-area .carousel-control-next,
+#carousel-area .carousel-control-prev {
   opacity: 1;
 }
 
-#carousel-area .carousel-control-next i, #carousel-area .carousel-control-prev i {
+#carousel-area .carousel-control-next i,
+#carousel-area .carousel-control-prev i {
   width: 48px;
   line-height: 48px;
   height: 48px;
@@ -3319,7 +3339,8 @@ label {
   transition: all 0.2s linear;
 }
 
-#carousel-area .carousel-control-next i:hover, #carousel-area .carousel-control-prev i:hover {
+#carousel-area .carousel-control-next i:hover,
+#carousel-area .carousel-control-prev i:hover {
   background: #00BCD4;
   color: #fff;
 }
@@ -3398,7 +3419,8 @@ label {
   margin-left: 10px;
 }
 
-.left, .right {
+.left,
+.right {
   cursor: pointer;
   font-size: 30px;
   color: #00BCD4;
@@ -3592,7 +3614,8 @@ label {
   transform: scale(0.5, 0.5);
 }
 
-.pagination .btn-prev, .pagination .btn-next {
+.pagination .btn-prev,
+.pagination .btn-next {
   padding: 5px 20px !important;
 }
 
@@ -3868,7 +3891,8 @@ blockquote p a:hover {
   box-shadow: none;
 }
 
-.btn.disabled, .btn:disabled {
+.btn.disabled,
+.btn:disabled {
   opacity: 1;
 }
 
@@ -4019,7 +4043,8 @@ textarea {
   z-index: 99;
 }
 
-.box .checkbox label, .box .radio label {
+.box .checkbox label,
+.box .radio label {
   padding-left: 34px;
 }
 
@@ -4032,7 +4057,7 @@ textarea {
   height: 100%;
 }
 
-.subscribe-form > div {
+.subscribe-form>div {
   vertical-align: middle;
   display: table-cell;
 }

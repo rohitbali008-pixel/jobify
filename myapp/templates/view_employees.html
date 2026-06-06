@@ -1,0 +1,54 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">View Employees</h3>
+  <div class="alert alert-secondary">
+    Company: <strong>{{ current_employee.company.name }}</strong>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Profile</th>
+          <th>Full Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Designation</th>
+          <th>Role</th>
+          <th>Salary</th>
+          <th>Joining Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for emp in employees %}
+          <tr>
+            <td>
+              {% if emp.profile_pic %}
+                <img src="{{ emp.profile_pic.url }}" alt="{{ emp.fullname }}" width="40" height="40" class="rounded-circle" style="object-fit: cover;" />
+              {% else %}
+                <span class="employee-avatar">{{ emp.fullname|first|upper }}</span>
+              {% endif %}
+            </td>
+            <td>{{ emp.fullname }}</td>
+            <td>{{ emp.email }}</td>
+            <td>{{ emp.phone|default:"-" }}</td>
+            <td>{{ emp.designation|default:"-" }}</td>
+            <td>{{ emp.role }}</td>
+            <td>{{ emp.sallary }}</td>
+            <td>{{ emp.joiningdate }}</td>
+            <td>
+              <a class="btn btn-sm btn-primary" href="{% url 'update_employee' employee_id=emp.id %}">Update</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" class="text-muted">No employees found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

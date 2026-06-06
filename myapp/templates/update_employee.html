@@ -1,0 +1,63 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Update Employee</h3>
+  <div class="alert alert-secondary">
+    Company: <strong>{{ current_employee.company.name }}</strong>
+  </div>
+  <form method="post" enctype="multipart/form-data" class="row g-3">
+    {% csrf_token %}
+    <div class="col-md-6">
+      <label class="form-label">Full Name</label>
+      <input type="text" class="form-control" name="fullname" value="{{ employee.fullname }}" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-control" name="email" value="{{ employee.email }}" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Phone</label>
+      <input type="text" class="form-control" name="phone" value="{{ employee.phone|default:'' }}" />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Designation</label>
+      <select name="designation" class="form-select">
+        <option value="" disabled {% if not employee.designation %}selected{% endif %}>Select designation</option>
+        {% for value, label in designation_choices %}
+          <option value="{{ value }}" {% if employee.designation == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Role</label>
+      <select name="role" class="form-select">
+        {% for value, label in role_choices %}
+          <option value="{{ value }}" {% if employee.role == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Salary</label>
+      <input type="number" class="form-control" name="sallary" value="{{ employee.sallary }}" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Date of Joining</label>
+      <input type="date" class="form-control" name="joiningdate" value="{{ employee.joiningdate }}" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Profile Picture</label>
+      <input type="file" class="form-control" name="profile_pic" />
+      {% if employee.profile_pic %}
+        <div class="mt-2">
+          <img src="{{ employee.profile_pic.url }}" alt="{{ employee.fullname }}" width="60" height="60" class="rounded-circle" style="object-fit: cover;" />
+        </div>
+      {% endif %}
+    </div>
+    <div class="col-12">
+      <a class="btn btn-secondary" href="{% url 'view_employees' %}">Back</a>
+      <button type="submit" class="btn btn-primary">Update Employee</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

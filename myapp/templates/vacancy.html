@@ -1,0 +1,81 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Create Vacancy</h3>
+  <form method="post" class="row g-3">
+    {% csrf_token %}
+    <div class="col-md-6">
+      <label class="form-label">Title</label>
+      <input type="text" class="form-control" name="title" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Experience</label>
+      <input type="number" class="form-control" name="experience" min="0" required />
+    </div>
+    <div class="col-12">
+      <label class="form-label">Description</label>
+      <textarea class="form-control" name="discription" rows="3" required></textarea>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Skills</label>
+      <input type="text" class="form-control" name="skills" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Qualification</label>
+      <input type="text" class="form-control" name="qualification" required />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Min Salary</label>
+      <input type="number" class="form-control" name="minsalary" required />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Max Salary</label>
+      <input type="number" class="form-control" name="maxsalary" required />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Vacancies</label>
+      <input type="number" class="form-control" name="vacancies" min="1" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Deadline</label>
+      <input type="date" class="form-control" name="deadline" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Location</label>
+      <input type="text" class="form-control" name="location" required />
+    </div>
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary">Create Vacancy</button>
+    </div>
+  </form>
+
+  <h4 class="mt-5">Vacancies</h4>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Qualification</th>
+          <th>Vacancies</th>
+          <th>Deadline</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for job in jobs %}
+          <tr>
+            <td>{{ job.title }}</td>
+            <td>{{ job.qualification }}</td>
+            <td>{{ job.vacancies }}</td>
+            <td>{{ job.deadline }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" class="text-muted">No vacancies added yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

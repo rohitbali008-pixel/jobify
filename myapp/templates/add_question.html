@@ -1,0 +1,76 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Add Question</h3>
+  <form method="post" class="row g-3">
+    {% csrf_token %}
+    <div class="col-md-6">
+      <label class="form-label">Test / Job Profile</label>
+      <select name="job" class="form-select" required>
+        <option value="" disabled selected>Select test</option>
+        {% for category in categories %}
+          <option value="{{ category.id }}">{{ category.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Marks</label>
+      <input type="number" class="form-control" name="marks" min="1" required />
+    </div>
+    <div class="col-12">
+      <label class="form-label">Question</label>
+      <input type="text" class="form-control" name="questions" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Option A</label>
+      <input type="text" class="form-control" name="opt_a" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Option B</label>
+      <input type="text" class="form-control" name="opt_b" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Option C</label>
+      <input type="text" class="form-control" name="opt_c" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Option D</label>
+      <input type="text" class="form-control" name="opt_d" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Answer</label>
+      <input type="text" class="form-control" name="answer" required />
+    </div>
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary">Save Question</button>
+    </div>
+  </form>
+
+  <h4 class="mt-5">Questions</h4>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Test</th>
+          <th>Question</th>
+          <th>Marks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for question in questions %}
+          <tr>
+            <td>{{ question.job_profile.name }}</td>
+            <td>{{ question.questions }}</td>
+            <td>{{ question.marks }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="3" class="text-muted">No questions added yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

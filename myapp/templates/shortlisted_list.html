@@ -1,0 +1,35 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Shortlisted List</h3>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Applicant</th>
+          <th>Job</th>
+          <th>Skills</th>
+          <th>Experience</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for application in applications %}
+          <tr>
+            <td>{{ application.user_id.fullname|default:"Unknown" }}</td>
+            <td>{{ application.job_id.title }}</td>
+            <td>{{ application.skills }}</td>
+            <td>{{ application.experience }}</td>
+            <td>{{ application.status }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="text-muted">No shortlisted applications found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

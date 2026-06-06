@@ -1,160 +1,182 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block content %}
-    <!-- Page Header Start -->
-    <div class="page-header">
-      <div class="container">
-        <div class="row">         
-          <div class="col-lg-8 col-md-6 col-xs-12">
-            <div class="breadcrumb-wrapper">
-              <div class="img-wrapper">
-                <img src="/static/img/about/company-logo.png" alt="">
-              </div>
-              <div class="content">
-                <h3 class="product-title">Hiring UI Designer</h3>
-                <p class="brand">UIDeck Inc.</p>
-                <div class="tags">  
-                  <span><i class="lni-map-marker"></i> New York</span>  
-                  <span><i class="lni-calendar"></i> Posted 26 June, 2020</span>  
-                </div>
+  <!-- Page Header Start -->
+  <div class="page-header">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-6 col-xs-12">
+          <div class="breadcrumb-wrapper">
+            <div class="img-wrapper">
+              <img src="/static/img/about/company-logo.png" alt="" />
+            </div>
+            <div class="content">
+              <h3 class="product-title">{{ job.title }}</h3>
+              <p class="brand">{{ job.created_by.company.name }}</p>
+              <div class="tags">
+                <span><i class="lni-map-marker"></i> {{ job.location }}</span>
+                <span><i class="lni-calendar"></i> Posted {{ job.created_by.joiningdate|date:'d M, Y' }}</span>
               </div>
             </div>
           </div>
-          <div class="col-lg-4 col-md-6 col-xs-12">
-            <div class="month-price">
-              <span class="year">Yearly</span>
-              <div class="price">$65,000</div>
+        </div>
+        <div class="col-lg-4 col-md-6 col-xs-12">
+          <div class="">
+            {% if is_authenticated %}
+              <button class="btn btn-common" data-toggle="modal" data-target="#applyModal">Apply job</button>
+            {% else %}
+              <a class="btn btn-common" href="{% url 'login' %}?next={% url 'job_details' job.id %}">Apply job</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Page Header End -->
+
+  <!-- Apply Modal -->
+  <div class="modal fade" id="applyModal" tabindex="-1" role="dialog" aria-labelledby="applyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="applyModalLabel">Apply for {{ job.title }}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <form method="post" enctype="multipart/form-data" action="{% url 'eligibility' job.id %}">
+            {% csrf_token %}
+            <div class="form-group">
+              <label>Resume</label>
+              <input type="file" name="resume" class="form-control" required accept=".pdf,.doc,.docx" />
+            </div>
+            <div class="form-group">
+              <label>Skills</label>
+              {% for skill in skills_list %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="skills" value="{{ skill }}" id="skill{{ forloop.counter }}" />
+                  <label class="form-check-label" for="skill{{ forloop.counter }}">{{ skill }}</label>
+                </div>
+              {% endfor %}
+            </div>
+            <div class="form-group">
+              <label>Experience</label>
+              {% comment %} <select name="experience" class="form-control" required>
+                <option value="">Select Experience</option>
+                {% for value, label in experience_choices %}
+                  <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+              </select> {% endcomment %}
+              <input type="number" name="experience" class="form-control" required />
+            </div>
+            <div class="text-right">
+              <button type="submit" class="btn btn-common">Submit Application</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Job Detail Section Start -->
+  <section class="job-detail section">
+    <div class="container">
+      <div class="row justify-content-between">
+        <div class="col-lg-8 col-md-12 col-xs-12">
+          <div class="content-area">
+            <h4>Job Description</h4>
+            <p>{{ job.discription }}</p>
+            <h5>What You Need for this Position</h5>
+            <ul>
+              {% for skill in skills_list %}
+                <li>{{ skill }}</li>
+              {% endfor %}
+            </ul>
+            <h5>How To Apply</h5>
+            <p>Click the Apply job button above and fill in the form to submit your application for this position.</p>
+            <h5>Qualification</h5>
+            <p>{{ job.qualification }}</p>
+            <h5>Salary Range</h5>
+            <p>${{ job.minsalary }} - ${{ job.maxsalary }}</p>
+            <h5>Vacancies</h5>
+            <p>{{ job.vacancies }}</p>
+            <h5>Deadline</h5>
+            <p>{{ job.deadline|date:'d M, Y' }}</p>
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-12 col-xs-12">
+          <div class="sideber">
+            <div class="widghet">
+              <h3>Job Location</h3>
+              <div class="maps">
+                <div id="map" class="map-full">
+                  <iframe src="https://maps.google.com/maps?q={{ job.location|urlencode }}&output=embed" allowfullscreen=""></iframe>
+                </div>
+              </div>
+            </div>
+            <div class="widghet">
+              <h3>Job Overview</h3>
+              <ul class="job-overview">
+                <li>
+                  <i class="lni-map-marker"></i> <span>Location:</span> {{ job.location }}
+                </li>
+                <li>
+                  <i class="lni-user"></i> <span>Posted by:</span> {{ job.created_by.fullname }}
+                </li>
+                <li>
+                  <i class="lni-calendar"></i> <span>Deadline:</span> {{ job.deadline|date:'d M, Y' }}
+                </li>
+                <li>
+                  <i class="lni-briefcase"></i> <span>Vacancies:</span> {{ job.vacancies }}
+                </li>
+              </ul>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <!-- Page Header End --> 
+  </section>
+  <!-- Job Detail Section End -->
 
-    <!-- Job Detail Section Start -->  
-    <section class="job-detail section">
-      <div class="container">
-        <div class="row justify-content-between">
-          <div class="col-lg-8 col-md-12 col-xs-12">
-            <div class="content-area">  
-              <h4>Job Description</h4>
-              <p>Proin gravida nibh vel velit auctor aliquet. Aenean sollicitudin, lorem quis bibendum auctor, nisi elit consequat ipsum, nec sagittis sem nibh id elit. Duis sed odio sit amet nibh vulputate cursus a sit amet mauris. Morbi umsan ipsum velit. Nam nec tellus a odio tincidunt auctor a ornare odio. Sed non mauris vitae erat consequat auctor eu in elit. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Mauris in erat justo. Nullam ac urna eu felis dapibus condimentum sit amet a augue. Sed non neque elit</p>
-              <p>Proin gravida nibh vel velit auctor aliquet. Aenean sollicitudin, lorem quis bibendum auctor, nisi elit consequat ipsum, nec sagittis sem nibh id elit. Duis sed odio sit amet nibh vulputate cursus a sit amet mauris. Morbi umsan ipsum velit. Nam nec tellus a odio tincidunt auctor a ornare odio.</p>
-              <h5>What You Need for this Position</h5>
-              <ul>
-                <li>- Objective-C</li>
-                <li>- iOS SDK</li>
-                <li>- XCode</li>
-                <li>- Cocoa</li>
-                <li>- ClojureScript</li>
-              </ul>
-              <h5>How To Apply</h5>
-              <p>Proin gravida nibh vel velit auctor aliquet. Aenean sollicitudin, lorem quis bibendum auctor, nisi elit consequat ipsum, nec sagittis sem nibh id elit. Duis sed odio sit amet nibh vulputate cursus a sit amet mauris.</p>
-              <a href="#" class="btn btn-common">Apply job</a> 
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-12 col-xs-12">
-            <div class="sideber">
-              <div class="widghet">
-                <h3>Job Location</h3>
-                <div class="maps">
-                  <div id="map" class="map-full">
-                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d405691.57240383344!2d-122.3212843181106!3d37.40247298383319!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x808fb68ad0cfc739%3A0x7eb356b66bd4b50e!2sSilicon+Valley%2C+CA%2C+USA!5e0!3m2!1sen!2sbd!4v1538319316724" allowfullscreen=""></iframe>
-                  </div>
-                </div>
-              </div>
-              <div class="widghet">
-                <h3>Share This Job</h3>
-                <div class="share-job">
-                  <form method="post" class="subscribe-form">
-                    <div class="form-group">
-                      <input type="email" name="Email" class="form-control" placeholder="https://joburl.com" required="">
-                      <button type="submit" name="subscribe" class="btn btn-common sub-btn"><i class="lni-files"></i></button>
-                      <div class="clearfix"></div>
-                    </div>
-                  </form>
-                  <ul class="mt-4 footer-social">
-                    <li><a class="facebook" href="#"><i class="lni-facebook-filled"></i></a></li>
-                    <li><a class="twitter" href="#"><i class="lni-twitter-filled"></i></a></li>
-                    <li><a class="linkedin" href="#"><i class="lni-linkedin-fill"></i></a></li>
-                    <li><a class="google-plus" href="#"><i class="lni-google-plus"></i></a></li>
-                  </ul>
-                  <div class="meta-tag">
-                    <span class="meta-part"><a href="#"><i class="lni-star"></i> Write a Review</a></span>
-                    <span class="meta-part"><a href="#"><i class="lni-warning"></i> Reports</a></span>
-                    <span class="meta-part"><a href="#"><i class="lni-share"></i> Share</a></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-    <!-- Job Detail Section End --> 
-    
-    <!-- Featured Section Start -->
-    <section id="featured" class="section bg-gray pb-45">
-      <div class="container">
-        <h4 class="small-title text-left">Similar Jobs</h4>
-        <div class="row">
+  <!-- Featured Section Start -->
+  <section id="featured" class="section bg-gray pb-45">
+    <div class="container">
+      <h4 class="small-title text-left">Similar Jobs</h4>
+      <div class="row">
+        {% for job in similar_jobs %}
           <div class="col-lg-6 col-md-12 col-xs-12">
-            <a class="job-listings-featured" href="/job-details/">
+            <a class="job-listings-featured" href="{% url 'job_details' job.id %}">
               <div class="row">
                 <div class="col-lg-6 col-md-6 col-xs-12">
                   <div class="job-company-logo">
-                    <img src="/static/img/features/img1.png" alt="">
+                    <img src="/static/img/features/img{{ forloop.counter|add:0 }}.png" alt="{{ job.created_by.company.name }}" />
                   </div>
                   <div class="job-details">
-                    <h3>Software Engineer</h3>
-                    <span class="company-neme">MizTech</span>
-                    <div class="tags">  
-                      <span><i class="lni-map-marker"></i> New York</span>  
-                      <span><i class="lni-user"></i>John Smith</span>   
+                    <h3>{{ job.title }}</h3>
+                    <span class="company-neme">{{ job.created_by.company.name }}</span>
+                    <div class="tags">
+                      <span><i class="lni-map-marker"></i> {{ job.location }}</span>
+                      <span><i class="lni-user"></i> {{ job.created_by.fullname }}</span>
                     </div>
                   </div>
                 </div>
                 <div class="col-lg-6 col-md-6 col-xs-12 text-right">
                   <div class="tag-type">
-                    <sapn class="heart-icon">
-                      <i class="lni-heart"></i>
-                    </sapn>
-                    <span class="full-time">Full Time</span>
+                    <span class="heart-icon"><i class="lni-heart"></i></span>
+                    {% if job.experience <= 1 %}
+                      <span class="full-time">Full Time</span>
+                    {% else %}
+                      <span class="part-time">Part Time</span>
+                    {% endif %}
                   </div>
                 </div>
               </div>
             </a>
           </div>
-          <div class="col-lg-6 col-md-12 col-xs-12">
-            <a class="job-listings-featured" href="/job-details/">
-              <div class="row">
-                <div class="col-lg-6 col-md-6 col-xs-12">
-                  <div class="job-company-logo">
-                    <img src="/static/img/features/img2.png" alt="">
-                  </div>
-                  <div class="job-details">
-                    <h3>Graphic Designer</h3>
-                    <span class="company-neme">Hunter Inc.</span>
-                    <div class="tags">  
-                      <span><i class="lni-map-marker"></i> New York</span>  
-                      <span><i class="lni-user"></i>John Smith</span>   
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-6 col-md-6 col-xs-12 text-right">
-                  <div class="tag-type">
-                    <sapn class="heart-icon">
-                      <i class="lni-heart"></i>
-                    </sapn>
-                    <span class="part-time">Part Time</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
+        {% endfor %}
       </div>
-    </section>
-    <!-- Featured Section End -->
+    </div>
+  </section>
+
+  <!-- Featured Section End -->
 {% endblock %}
