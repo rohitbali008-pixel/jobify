@@ -1,6 +1,6 @@
 
 from django.shortcuts import render, HttpResponse, get_object_or_404, redirect
-from .models import User , Profile , Employee, Company , Job, Application , Category, Question
+from .models import User , Profile , Employee, Company , Job, Application , Category, Question, Test, TestAssignment
 
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.mail import send_mail
@@ -32,6 +32,9 @@ def get_current_employee(request):
 def dashboard_context(current_employee, **kwargs):
     context = {"current_employee": current_employee}
     context.update(kwargs)
+    context["session_fullname"] = current_employee.fullname if current_employee else ""
+    context["session_email"] = current_employee.email if current_employee else ""
+    context["is_authenticated"] = True
     return context
 
 
@@ -80,7 +83,7 @@ def blog_left_sidebar(request):
 
 
 def bookmarked(request):
-    return render(request, "bookmarked.html")
+    return render(request, "bookmarked.html", {"active_page": "bookmarked"})
 
 
 def browse_categories(request):
@@ -116,14 +119,14 @@ def change_password(request):
             messages.success(request, "Password changed successfully")
             return redirect('change_password')
 
-        return render(request, "change-password.html", {"user_type": "employee"})
+        return render(request, "change-password.html", {"user_type": "employee", "active_page": "change_password"})
 
     session_email = request.session.get("email")
     user = None
     if session_email:
         try:
             user = User.objects.get(email=session_email)
-        except User.DoesNotExist:
+        except User.DoesNotExist: 
             user = None
 
     if not user:
@@ -147,7 +150,7 @@ def change_password(request):
         messages.success(request, "Password changed successfully")
         return redirect('change_password')
 
-    return render(request, "change-password.html", {"user_type": "user"})
+    return render(request, "change-password.html", {"user_type": "user", "active_page": "change_password"})
 
 
 def contact(request):
@@ -159,7 +162,7 @@ def faq(request):
 
 
 def job_alerts(request):
-    return render(request, "job-alerts.html")
+    return render(request, "job-alerts.html", {"active_page": "job_alerts"})
 
 
 def job_details(request, id):
@@ -181,19 +184,19 @@ def job_page(request):
 
 
 def manage_applications(request):
-    return render(request, "manage-applications.html")
+    return render(request, "manage-applications.html", {"active_page": "manage_applications"})
 
 
 def manage_jobs(request):
-    return render(request, "manage-jobs.html")
+    return render(request, "manage-jobs.html", {"active_page": "manage_jobs"})
 
 
 def manage_resumes(request):
-    return render(request, "manage-resumes.html")
+    return render(request, "manage-resumes.html", {"active_page": "manage_resumes"})
 
 
 def notifications(request):
-    return render(request, "notifications.html")
+    return render(request, "notifications.html", {"active_page": "notifications"})
 
 
 def post_job(request):
@@ -209,7 +212,7 @@ def privacy_policy(request):
 
 
 def resume(request):
-    return render(request, "resume.html")
+    return render(request, "resume.html", {"active_page": "resume"})
 
 
 def single_post(request):
@@ -296,6 +299,8 @@ def login(request):
 
                     request.session["fullname"] = employee.fullname
                     request.session["email"] = employee.email
+                    print("Login Successfully.")
+                    messages.success(request,"Login Successfully.")
                     return redirect('dashboard')
             except:
 
@@ -616,6 +621,84 @@ def add_question(request):
         curr_employee,
         categories=categories,
         questions=questions,
+    ))
+
+
+def add_test_question(request):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
+        return redirect('login')
+
+    jobs = Job.objects.filter(created_by__company=curr_employee.company).order_by("-id")
+    questions = Question.objects.select_related("job_profile").order_by("-id")
+
+    if request.method == "POST":
+        title = request.POST.get("title")
+        vacancy = get_object_or_404(Job, id=request.POST.get("vacancy"))
+        duration_minutes = int(request.POST.get("duration_minutes", 0))
+        passing_marks = int(request.POST.get("passing_marks", 0))
+        question_ids = request.POST.getlist("question_ids")
+
+        total_marks = 0
+        selected_questions = []
+        for qid in question_ids:
+            try:
+                q = Question.objects.get(id=qid)
+                selected_questions.append(q)
+                total_marks += q.marks
+            except Question.DoesNotExist:
+                pass
+
+        test = Test.objects.create(
+            title=title,
+            vacancy=vacancy,
+            duration_minutes=duration_minutes,
+            total_marks=total_marks,
+            passing_marks=passing_marks,
+            created_by=curr_employee,
+        )
+        test.questions.set(selected_questions)
+        messages.success(request, "Test created successfully")
+        return redirect('add_test_question')
+
+    tests = Test.objects.select_related("vacancy", "created_by").all().order_by("-id")
+    return render(request, "add_test_question.html", dashboard_context(
+        curr_employee,
+        jobs=jobs,
+        questions=questions,
+        tests=tests,
+    ))
+
+
+def allot_test(request):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
+        return redirect('login')
+
+    tests = Test.objects.select_related("vacancy").order_by("-id")
+    applications = Application.objects.select_related("job_id", "user_id").filter(
+        job_id__created_by=curr_employee,
+        status="Shortlisted",
+    ).order_by("-applied_on", "-id")
+
+    if request.method == "POST":
+        test = get_object_or_404(Test, id=request.POST.get("test_id"))
+        application = get_object_or_404(applications, id=request.POST.get("application_id"))
+        TestAssignment.objects.create(
+            application=application,
+            test=test,
+        )
+        messages.success(request, "Test alloted successfully")
+        return redirect('allot_test')
+
+    assignments = TestAssignment.objects.select_related("application__user_id", "test").filter(
+        application__job_id__created_by=curr_employee
+    ).order_by("-assigned_on", "-id")
+    return render(request, "allot_test.html", dashboard_context(
+        curr_employee,
+        tests=tests,
+        applications=applications,
+        assignments=assignments,
     ))
 
 

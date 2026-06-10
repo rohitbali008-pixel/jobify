@@ -1,0 +1,122 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Create Test</h3>
+
+  <form method="post" class="row g-3" id="testForm">
+    {% csrf_token %}
+
+    <div class="col-12">
+      <h5>Step 1: Test Details</h5>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Test Title</label>
+      <input type="text" class="form-control" name="title" id="testTitle" required />
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Job</label>
+      <select name="vacancy" class="form-select" id="testVacancy" required>
+        <option value="" disabled selected>Select job</option>
+        {% for job in jobs %}
+          <option value="{{ job.id }}">{{ job.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Duration (minutes)</label>
+      <input type="number" class="form-control" name="duration_minutes" id="durationMinutes" min="1" required />
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Passing Marks</label>
+      <input type="number" class="form-control" name="passing_marks" id="passingMarks" min="0" required />
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Total Marks</label>
+      <input type="number" class="form-control" name="total_marks" id="totalMarks" readonly />
+    </div>
+
+    <div class="col-12">
+      <h5 class="mt-4">Step 2: Select Questions</h5>
+    </div>
+
+    <div class="col-12">
+      <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+        {% for question in questions %}
+          <div class="form-check mb-2">
+            <input class="form-check-input question-checkbox" type="checkbox" name="question_ids" value="{{ question.id }}" id="q{{ question.id }}" data-marks="{{ question.marks }}" />
+            <label class="form-check-label" for="q{{ question.id }}">
+              <strong>{{ question.questions|truncatechars:80 }}</strong>
+              <span class="text-muted ms-2">(Marks: {{ question.marks }}, Category: {{ question.job_profile.name }})</span>
+            </label>
+          </div>
+        {% empty %}
+          <p class="text-muted">No questions available. Add questions first.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary">Create Test</button>
+    </div>
+  </form>
+
+  <h4 class="mt-5">Tests</h4>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Job</th>
+          <th>Duration</th>
+          <th>Total Marks</th>
+          <th>Passing Marks</th>
+          <th>Created On</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for test in tests %}
+          <tr>
+            <td>{{ test.title }}</td>
+            <td>{{ test.vacancy.title }}</td>
+            <td>{{ test.duration_minutes }} min</td>
+            <td>{{ test.total_marks }}</td>
+            <td>{{ test.passing_marks }}</td>
+            <td>{{ test.created_at|date:"M d, Y" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="text-muted">No tests created yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const questionCheckboxes = document.querySelectorAll('.question-checkbox');
+    const totalMarksInput = document.getElementById('totalMarks');
+
+    function calculateTotalMarks() {
+      let total = 0;
+      questionCheckboxes.forEach(function(checkbox) {
+        if (checkbox.checked) {
+          total += parseInt(checkbox.dataset.marks) || 0;
+        }
+      });
+      totalMarksInput.value = total;
+    }
+
+    questionCheckboxes.forEach(function(checkbox) {
+      checkbox.addEventListener('change', calculateTotalMarks);
+    });
+  });
+</script>
+{% endblock %}

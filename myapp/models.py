@@ -149,7 +149,7 @@ class Question(models.Model):
 
 class Test(models.Model):
     title = models.CharField(max_length=100)
-    category = models.ForeignKey( Category,on_delete=models.CASCADE)
+    vacancy = models.ForeignKey(Job, on_delete = models.CASCADE)
     questions = models.ManyToManyField(Question)
     duration_minutes = models.IntegerField()
     total_marks = models.IntegerField()

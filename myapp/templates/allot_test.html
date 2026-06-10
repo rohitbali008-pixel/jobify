@@ -1,0 +1,61 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Allot Test</h3>
+  <form method="post" class="row g-3">
+    {% csrf_token %}
+    <div class="col-md-6">
+      <label class="form-label">Test</label>
+      <select name="test_id" class="form-select" required>
+        <option value="" disabled selected>Select test</option>
+        {% for test in tests %}
+          <option value="{{ test.id }}">{{ test.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Application</label>
+      <select name="application_id" class="form-select" required>
+        <option value="" disabled selected>Select applicant</option>
+        {% for application in applications %}
+          <option value="{{ application.id }}">{{ application.user_id.fullname }} - {{ application.job_id.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary">Allot Test</button>
+    </div>
+  </form>
+
+  <h4 class="mt-5">Assigned Tests</h4>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Applicant</th>
+          <th>Test</th>
+          <th>Status</th>
+          <th>Score</th>
+          <th>Assigned On</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for assignment in assignments %}
+          <tr>
+            <td>{{ assignment.application.user_id.fullname|default:"Unknown" }}</td>
+            <td>{{ assignment.test.title }}</td>
+            <td>{{ assignment.status }}</td>
+            <td>{{ assignment.score }}</td>
+            <td>{{ assignment.assigned_on|date:"M d, Y" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="text-muted">No tests alloted yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
