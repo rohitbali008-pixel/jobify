@@ -179,3 +179,74 @@ class TestAssignment(models.Model):
 
     def __str__(self):
         return f"{self.application.user_id.fullname}"
+
+
+class Interview(models.Model):
+    application = models.ForeignKey( Application,on_delete=models.CASCADE, related_name="interviews")
+    interviewer = models.ForeignKey( Employee, on_delete=models.SET_NULL,null=True, related_name="assigned_interviews" )
+    interview_type = models.CharField( max_length=20, choices=( ('Technical', 'Technical'), ('HR', 'HR'),  ) )
+    scheduled_at = models.DateTimeField()
+    completed_at = models.DateTimeField(null=True,blank=True)
+    meeting_link = models.URLField( blank=True, null=True )
+
+    status = models.CharField( max_length=20,choices=(
+            ('Scheduled', 'Scheduled'),
+            ('Completed', 'Completed'),
+            ('Rejected', 'Rejected'),
+            ('No Show', 'No Show'),
+        ),  default='Scheduled')
+
+    score = models.FloatField(default=0)
+    remarks = models.TextField(blank=True, null=True)
+
+
+    recommendation = models.CharField(
+        max_length=20,choices=(
+            ('Pass', 'Pass'),
+            ('Fail', 'Fail'),
+            ('Hold', 'Hold'),
+        ),blank=True,  null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.application.user_id.fullname} - {self.interview_type}"
+
+
+class Selection(models.Model):
+    application = models.OneToOneField(Application, on_delete=models.CASCADE)
+    selected_by = models.ForeignKey(Employee, on_delete=models.SET_NULL,null=True)
+    final_salary = models.IntegerField()
+    designation = models.CharField(max_length=100 )
+    joining_date = models.DateField()
+    
+    status = models.CharField( max_length=20,
+        choices=(
+            ('Selected', 'Selected'),
+            ('Rejected', 'Rejected'),
+        ) )
+
+    remarks = models.TextField(blank=True,null=True)
+    decision_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.application.user_id.fullname
+
+
+class OfferLetter(models.Model):
+    selection = models.OneToOneField(Selection,on_delete=models.CASCADE)
+    offer_letter = models.FileField(upload_to='offer_letters/')
+    offered_salary = models.IntegerField()
+    designation = models.CharField(max_length=100)
+    expiry_date = models.DateField()
+
+    status = models.CharField(max_length=20,
+        choices=(
+            ('Pending', 'Pending'),
+            ('Accepted', 'Accepted'),
+            ('Rejected', 'Rejected'),
+            ('Expired', 'Expired'),
+        ), default='Pending' )
+    sent_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.selection.application.user_id.fullname
