@@ -701,7 +701,7 @@ def scheduled_interview(request):
 
     applications = Application.objects.select_related("job_id", "user_id").filter(
         job_id__created_by=curr_employee,
-        status="Shortlisted",
+        status="Interviewed",
     ).order_by("-applied_on", "-id")
 
     interviewers = Employee.objects.filter(company=curr_employee.company).order_by("fullname")
