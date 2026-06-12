@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Test Result - {{ assignment.test.title }}{% endblock %}
+
+{% block hero %}{% endblock %}
+
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="contact-form text-center result-card">
+            <div class="success-icon mb-4">
+              <span>✓</span>
+            </div>
+
+            <h3 class="display-6 fw-bold mb-3">Congratulations!</h3>
+            <h4 class="mb-3">{{ assignment.test.title }}</h4>
+            <p class="text-muted mb-2">Job: {{ assignment.application.job_id.title }}</p>
+
+            <div class="result-message my-4">
+              <h2 class="h4 fw-bold mb-3">Thank you for your time.</h2>
+              <p class="mb-2">We will update you soon.</p>
+              <p class="selected-note">You are selected for the interview.</p>
+            </div>
+
+            <a href="{% url 'take_test' %}" class="button btn btn-common">Back to Tests</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .result-card {
+      padding: 3rem 2rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+      background: linear-gradient(135deg, #ffffff 0%, #f6fbff 100%);
+    }
+
+    .success-icon {
+      width: 86px;
+      height: 86px;
+      margin: 0 auto;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: #fff;
+      font-size: 2.5rem;
+      font-weight: 700;
+      box-shadow: 0 12px 24px rgba(40, 167, 69, 0.28);
+    }
+
+    .result-message {
+      padding: 2rem;
+      border-radius: 1rem;
+      background: #f8fff9;
+      border: 1px solid #c8f6d4;
+    }
+
+    .selected-note {
+      color: #198754;
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+  </style>
+{% endblock %}

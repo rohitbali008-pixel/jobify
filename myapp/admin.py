@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User , Profile , Company , Employee , Job, Application ,Category, Question, Test, TestAssignment
+from .models import User , Profile , Company , Employee , Job, Application ,Category, Question, Test, TestAssignment, Interview, Selection,OfferLetter
 
 # Register your models here.
 admin.site.register(User)
@@ -12,3 +12,6 @@ admin.site.register(Category)
 admin.site.register(Question)
 admin.site.register(Test)
 admin.site.register(TestAssignment)
+admin.site.register(Interview)
+admin.site.register(Selection)
+admin.site.register(OfferLetter)

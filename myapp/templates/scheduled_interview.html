@@ -1,34 +1,177 @@
-{% extends "dashboard.html" %}
+{% extends 'dashboard.html' %}
 
 {% block content %}
-<div class="container py-4">
-  <h3 class="mb-3">Scheduled Interview</h3>
-  <form method="post" class="row g-3">
-    {% csrf_token %}
-    <div class="col-md-6">
-      <label class="form-label">Application</label>
-      <select name="application_id" class="form-select" required>
-        <option value="" disabled selected>Select shortlisted applicant</option>
-        {% for application in applications %}
-          <option value="{{ application.id }}">{{ application.user_id.fullname|default:"Unknown" }} - {{ application.job_id.title }}</option>
-        {% endfor %}
-      </select>
+  <div class="container py-4">
+    <div class="interview-header mb-4">
+      <div>
+        <span class="badge badge-primary mb-2">Interview Scheduling</span>
+        <h3 class="fw-bold mb-2">Schedule Candidate Interview</h3>
+        <p class="mb-0">Create an interview entry, assign an interviewer from your company, and generate a Jitsi meeting link.</p>
+      </div>
     </div>
-    <div class="col-md-3">
-      <label class="form-label">Interview Date</label>
-      <input type="date" class="form-control" name="interview_date" required />
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Interview Time</label>
-      <input type="time" class="form-control" name="interview_time" required />
-    </div>
-    <div class="col-12">
-      <label class="form-label">Meeting Link or Address</label>
-      <input type="text" class="form-control" name="meeting_place" required />
-    </div>
-    <div class="col-12">
-      <button type="submit" class="btn btn-primary">Schedule Interview</button>
-    </div>
-  </form>
-</div>
+
+    <form method="post" class="schedule-form" id="interviewForm">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="form-field">
+          <label class="form-label">Applicant</label>
+          <select name="application_id" id="applicationId" class="form-select" required>
+            <option value="" disabled selected>Select shortlisted applicant</option>
+            {% for application in applications %}
+              <option value="{{ application.id }}" data-label="{{ application.user_id.fullname|default:'Candidate' }}-{{ application.job_id.title }}">
+                {{ application.user_id.fullname|default:'Unknown' }} - {{ application.job_id.title }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Interview Type</label>
+          <select name="interview_type" class="form-select" required>
+            {% for value, label in interview_type_choices %}
+              <option value="{{ value }}" {% if forloop.first %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Interviewer</label>
+          <select name="interviewer_id" class="form-select" required>
+            <option value="" disabled selected>Select interviewer from your company</option>
+            {% for employee in interviewers %}
+              <option value="{{ employee.id }}">{{ employee.fullname }} - {{ employee.designation|default:'Employee' }}</option>
+            {% empty %}
+              <option value="" disabled>No interviewer available</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Interview Date</label>
+          <input type="date" id="interviewDate" class="form-control" name="interview_date" required />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Interview Time</label>
+          <input type="time" id="interviewTime" class="form-control" name="interview_time" required />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Room Name</label>
+          <input type="text" id="roomName" class="form-control" name="room_name" placeholder="Generated automatically" readonly />
+        </div>
+
+        <div class="form-field meeting-link-field">
+          <label class="form-label">Meeting Link</label>
+          <div class="input-with-button">
+            <input type="url" id="meetingLink" class="form-control" name="meeting_link" placeholder="https://meet.jit.si/room-name" />
+            <button type="button" id="generateJitsiLink" class="btn btn-primary">Generate Jitsi Link</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Back</a>
+        <button type="submit" class="btn btn-success">Schedule Interview</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const applicationSelect = document.getElementById('applicationId')
+      const dateInput = document.getElementById('interviewDate')
+      const timeInput = document.getElementById('interviewTime')
+      const roomNameInput = document.getElementById('roomName')
+      const meetingLinkInput = document.getElementById('meetingLink')
+      const generateButton = document.getElementById('generateJitsiLink')
+
+      function sanitize(value) {
+        return String(value || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .slice(0, 45) || 'candidate'
+      }
+
+      function generateRoomName() {
+        const applicationLabel = applicationSelect.selectedOptions[0] ? applicationSelect.selectedOptions[0].dataset.label : 'candidate'
+        const dateValue = dateInput.value || new Date().toISOString().slice(0, 10)
+        const randomValue = Math.random().toString(36).substring(2, 8).toUpperCase()
+        return `interview-${sanitize(applicationLabel)}-${dateValue.replaceAll('-', '')}-${randomValue}`
+      }
+
+      generateButton.addEventListener('click', function () {
+        const roomName = generateRoomName()
+        roomNameInput.value = roomName
+        meetingLinkInput.value = `https://meet.jit.si/${roomName}`
+      })
+
+      applicationSelect.addEventListener('change', function () {
+        roomNameInput.value = ''
+        meetingLinkInput.value = ''
+      })
+    })
+  </script>
+
+  <style>
+    .interview-header {
+      padding: 1.5rem;
+      border-radius: 1.5rem;
+      background: linear-gradient(135deg, #0f172a, #2563eb);
+      color: #ffffff;
+      box-shadow: 0 18px 40px rgba(37, 99, 235, 0.22);
+    }
+
+    .schedule-form {
+      padding: 2rem;
+      border-radius: 1.5rem;
+      background: #ffffff;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .meeting-link-field {
+      grid-column: 1 / -1;
+    }
+
+    .input-with-button {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.75rem;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid,
+      .input-with-button {
+        grid-template-columns: 1fr;
+      }
+
+      .form-actions {
+        flex-direction: column-reverse;
+      }
+
+      .form-actions .btn {
+        width: 100%;
+      }
+    }
+  </style>
 {% endblock %}

@@ -1,16 +1,20 @@
 
 from django.shortcuts import render, HttpResponse, get_object_or_404, redirect
-from .models import User , Profile , Employee, Company , Job, Application , Category, Question, Test, TestAssignment
+from django.urls import reverse
+from django.db import transaction
+from django.conf import settings
+from django.utils import timezone
+from .models import User , Profile , Employee, Company , Job, Application , Category, Question, Test, TestAssignment, Interview
 
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.mail import send_mail
 # Create your views here.
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.contrib import messages
 import random
 import string
 # Create your views here.
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 
 BASE_TEMPLATE_CONTEXT = {"base_template": "base.html"}
@@ -36,6 +40,120 @@ def dashboard_context(current_employee, **kwargs):
     context["session_email"] = current_employee.email if current_employee else ""
     context["is_authenticated"] = True
     return context
+
+
+def get_current_candidate(request):
+    session_email = request.session.get("email")
+    if not session_email:
+        return None
+    try:
+        return User.objects.get(email=session_email)
+    except User.DoesNotExist:
+        return None
+
+
+def normalize_test_answer(value):
+    answer = str(value or "").strip().upper().replace(" ", "").replace(".", "")
+    answer = answer.replace("(", "").replace(")", "")
+    if answer.startswith("OPTION"):
+        answer = answer[6:]
+    return answer
+
+
+def is_assignment_expired(assignment):
+    return timezone.now() > assignment.assigned_on + timedelta(minutes=assignment.test.duration_minutes)
+
+
+def mark_expired_assignments(assignments):
+    for assignment in assignments:
+        if assignment.status == "Pending" and is_assignment_expired(assignment):
+            assignment.status = "Expired"
+            assignment.completed_on = timezone.now()
+            assignment.save(update_fields=["status", "completed_on"])
+
+
+def send_test_assignment_email(request, assignment):
+    candidate = assignment.application.user_id
+    job = assignment.application.job_id
+    test = assignment.test
+    test_url = request.build_absolute_uri(reverse("take_test_detail", args=[assignment.id]))
+    company_name = "our company"
+    if test.created_by and test.created_by.company:
+        company_name = test.created_by.company.name
+
+    subject = f"Test Allotted - {test.title}"
+    message = (
+        f"Hello {candidate.fullname},\n\n"
+        f"Congratulations! You have been shortlisted for the {job.title} position at {company_name}.\n\n"
+        f"A test has been allotted to you.\n"
+        f"Test: {test.title}\n"
+        f"Duration: {test.duration_minutes} minutes\n"
+        f"Total Marks: {test.total_marks}\n"
+        f"Passing Marks: {test.passing_marks}\n\n"
+        f"Login to Interview IQ and click the Take Test link in the navbar, or open this URL:\n"
+        f"{test_url}"
+    )
+
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.EMAIL_HOST_USER,
+            [candidate.email],
+            fail_silently=False,
+        )
+    except Exception as exc:
+        messages.warning(request, f"Test allotted successfully, but email could not be sent: {exc}")
+    else:
+        messages.success(request, "Test allotted successfully and email sent to candidate")
+
+
+def send_interview_emails(request, interview, interviewer):
+    candidate = interview.application.user_id
+    job = interview.application.job_id
+    company_name = interviewer.company.name if interviewer and interviewer.company else "our company"
+    scheduled_at = timezone.localtime(interview.scheduled_at).strftime("%d %b %Y, %I:%M %p")
+    candidate_subject = f"Interview Scheduled - {job.title}"
+    interviewer_subject = f"New Interview Assigned - {candidate.fullname if candidate else 'Candidate'}"
+
+    candidate_message = (
+        f"Hello {candidate.fullname if candidate else 'Candidate'},\n\n"
+        f"Your interview has been scheduled for the {job.title} position at {company_name}.\n\n"
+        f"Interview Type: {interview.interview_type}\n"
+        f"Scheduled At: {scheduled_at}\n"
+        f"Interviewer: {interviewer.fullname if interviewer else 'Not assigned'}\n"
+        f"Meeting Link: {interview.meeting_link or 'Not provided'}\n\n"
+        f"Please join the meeting on time. If you have any questions, contact the HR team."
+    )
+
+    interviewer_message = (
+        f"Hello {interviewer.fullname if interviewer else 'Interviewer'},\n\n"
+        f"A new interview has been assigned to you for {company_name}.\n\n"
+        f"Candidate: {candidate.fullname if candidate else 'Unknown candidate'}\n"
+        f"Job: {job.title}\n"
+        f"Interview Type: {interview.interview_type}\n"
+        f"Scheduled At: {scheduled_at}\n"
+        f"Meeting Link: {interview.meeting_link or 'Not provided'}\n\n"
+        f"Please review the candidate profile before the interview."
+    )
+
+    email_errors = []
+    if candidate and candidate.email:
+        try:
+            send_mail(candidate_subject, candidate_message, settings.EMAIL_HOST_USER, [candidate.email], fail_silently=False)
+        except Exception as exc:
+            email_errors.append(f"candidate email: {exc}")
+
+    if interviewer and interviewer.email:
+        try:
+            send_mail(interviewer_subject, interviewer_message, settings.EMAIL_HOST_USER, [interviewer.email], fail_silently=False)
+        except Exception as exc:
+            email_errors.append(f"interviewer email: {exc}")
+
+    if email_errors:
+        messages.warning(request, f"Interview scheduled, but email notification failed: {'; '.join(email_errors)}")
+    else:
+        messages.success(request, "Interview scheduled and notification emails sent")
 
 
 def index(request):
@@ -541,9 +659,39 @@ def shortlisted_list(request):
 
     applications = Application.objects.select_related("job_id", "user_id").filter(
         job_id__created_by=curr_employee,
-        status="Shortlisted",
+        status__in=["Shortlisted", "Interviewed"],
     ).order_by("-applied_on", "-id")
-    return render(request, "shortlisted_list.html", dashboard_context(curr_employee, applications=applications))
+
+    completed_assignments = TestAssignment.objects.select_related(
+        "application__user_id",
+        "application__job_id",
+        "test",
+        "test__vacancy",
+    ).filter(
+        application__in=applications,
+        status="Completed",
+    ).order_by("-completed_on", "-id")
+
+    applications = applications.prefetch_related(Prefetch(
+        "testassignment_set",
+        queryset=completed_assignments,
+        to_attr="completed_assignments",
+    ))
+
+    shortlisted_applications = [
+        application for application in applications
+        if application.status == "Shortlisted"
+    ]
+    interviewed_applications = [
+        application for application in applications
+        if application.status == "Interviewed"
+    ]
+
+    return render(request, "shortlisted_list.html", dashboard_context(
+        curr_employee,
+        shortlisted_applications=shortlisted_applications,
+        interviewed_applications=interviewed_applications,
+    ))
 
 
 def scheduled_interview(request):
@@ -556,19 +704,57 @@ def scheduled_interview(request):
         status="Shortlisted",
     ).order_by("-applied_on", "-id")
 
+    interviewers = Employee.objects.filter(company=curr_employee.company).order_by("fullname")
+    interview_type_choices = Interview._meta.get_field("interview_type").choices
+
     if request.method == "POST":
         application = get_object_or_404(applications, id=request.POST.get("application_id"))
+        interviewer = get_object_or_404(interviewers, id=request.POST.get("interviewer_id"))
+        interview_type = request.POST.get("interview_type") or "Technical"
         interview_date = request.POST.get("interview_date")
         interview_time = request.POST.get("interview_time")
-        meeting_place = request.POST.get("meeting_place")
-        applicant_name = application.user_id.fullname if application.user_id else "Unknown applicant"
-        messages.success(
-            request,
-            f"Interview scheduled for {applicant_name} on {interview_date} at {interview_time}. Venue: {meeting_place}",
+        meeting_link = request.POST.get("meeting_link", "").strip()
+
+        if interview_type not in dict(interview_type_choices):
+            messages.error(request, "Please select a valid interview type")
+            return redirect('scheduled_interview')
+
+        try:
+            interview_date_obj = datetime.strptime(interview_date, "%Y-%m-%d").date()
+            interview_time_obj = datetime.strptime(interview_time, "%H:%M").time()
+            scheduled_at = timezone.make_aware(
+                datetime.combine(interview_date_obj, interview_time_obj),
+                timezone.get_current_timezone(),
+            )
+        except (TypeError, ValueError):
+            messages.error(request, "Please provide a valid interview date and time")
+            return redirect('scheduled_interview')
+
+        if scheduled_at <= timezone.now():
+            messages.error(request, "Interview date and time must be in the future")
+            return redirect('scheduled_interview')
+
+        if not meeting_link:
+            room_name = request.POST.get("room_name", "").strip() or f"interview-{application.id}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
+            meeting_link = f"https://meet.jit.si/{room_name}"
+
+        interview = Interview.objects.create(
+            application=application,
+            interviewer=interviewer,
+            interview_type=interview_type,
+            scheduled_at=scheduled_at,
+            meeting_link=meeting_link,
+            status="Scheduled",
         )
+        send_interview_emails(request, interview, interviewer)
         return redirect('scheduled_interview')
 
-    return render(request, "scheduled_interview.html", dashboard_context(curr_employee, applications=applications))
+    return render(request, "scheduled_interview.html", dashboard_context(
+        curr_employee,
+        applications=applications,
+        interviewers=interviewers,
+        interview_type_choices=interview_type_choices,
+    ))
 
 
 def create_test(request):
@@ -576,22 +762,49 @@ def create_test(request):
     if not curr_employee:
         return redirect('login')
 
-    companies = Company.objects.all()
     if request.method == "POST":
-        company = get_object_or_404(Company, id=request.POST.get("company_id"))
         Category.objects.create(
             name=request.POST.get("name"),
-            company=company,
+            company=curr_employee.company,
         )
-        messages.success(request, "Test created successfully")
+        messages.success(request, "Test category added successfully")
         return redirect('create_test')
 
-    categories = Category.objects.select_related("company").order_by("-id")
+    categories = Category.objects.filter(company=curr_employee.company).order_by("-id")
     return render(request, "create_test.html", dashboard_context(
         curr_employee,
-        companies=companies,
         categories=categories,
     ))
+
+
+def update_category(request, category_id):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
+        return redirect('login')
+
+    category = get_object_or_404(Category, id=category_id, company=curr_employee.company)
+
+    if request.method == "POST":
+        category.name = request.POST.get("name")
+        category.save()
+        messages.success(request, "Test category updated successfully")
+        return redirect('create_test')
+
+    return render(request, "update_category.html", dashboard_context(
+        curr_employee,
+        category=category,
+    ))
+
+
+def delete_category(request, category_id):
+    curr_employee = get_current_employee(request)
+    if not curr_employee:
+        return redirect('login')
+
+    category = get_object_or_404(Category, id=category_id, company=curr_employee.company)
+    category.delete()
+    messages.success(request, "Test category deleted successfully")
+    return redirect('create_test')
 
 
 def add_question(request):
@@ -599,7 +812,7 @@ def add_question(request):
     if not curr_employee:
         return redirect('login')
 
-    categories = Category.objects.all().order_by("name")
+    categories = Category.objects.filter(company=curr_employee.company).order_by("name")
     if request.method == "POST":
         job_profile = get_object_or_404(Category, id=request.POST.get("job"))
         Question.objects.create(
@@ -616,7 +829,7 @@ def add_question(request):
         messages.success(request, "Question added successfully")
         return redirect('add_question')
 
-    questions = Question.objects.select_related("job_profile").order_by("-id")
+    questions = Question.objects.filter(job_profile__company=curr_employee.company).select_related("job_profile").order_by("-id")
     return render(request, "add_question.html", dashboard_context(
         curr_employee,
         categories=categories,
@@ -630,7 +843,7 @@ def add_test_question(request):
         return redirect('login')
 
     jobs = Job.objects.filter(created_by__company=curr_employee.company).order_by("-id")
-    questions = Question.objects.select_related("job_profile").order_by("-id")
+    questions = Question.objects.filter(job_profile__company=curr_employee.company).select_related("job_profile").order_by("-id")
 
     if request.method == "POST":
         title = request.POST.get("title")
@@ -661,7 +874,7 @@ def add_test_question(request):
         messages.success(request, "Test created successfully")
         return redirect('add_test_question')
 
-    tests = Test.objects.select_related("vacancy", "created_by").all().order_by("-id")
+    tests = Test.objects.select_related("vacancy", "created_by").filter(created_by__company=curr_employee.company).order_by("-id")
     return render(request, "add_test_question.html", dashboard_context(
         curr_employee,
         jobs=jobs,
@@ -675,20 +888,25 @@ def allot_test(request):
     if not curr_employee:
         return redirect('login')
 
-    tests = Test.objects.select_related("vacancy").order_by("-id")
+    tests = Test.objects.select_related("vacancy").filter(created_by__company=curr_employee.company).order_by("-id")
     applications = Application.objects.select_related("job_id", "user_id").filter(
         job_id__created_by=curr_employee,
         status="Shortlisted",
     ).order_by("-applied_on", "-id")
 
     if request.method == "POST":
-        test = get_object_or_404(Test, id=request.POST.get("test_id"))
+        test = get_object_or_404(Test, id=request.POST.get("test_id"), created_by__company=curr_employee.company)
         application = get_object_or_404(applications, id=request.POST.get("application_id"))
-        TestAssignment.objects.create(
+
+        if TestAssignment.objects.filter(application=application, test=test, status="Pending").exists():
+            messages.warning(request, "This test is already allotted to the selected candidate")
+            return redirect('allot_test')
+
+        assignment = TestAssignment.objects.create(
             application=application,
             test=test,
         )
-        messages.success(request, "Test alloted successfully")
+        send_test_assignment_email(request, assignment)
         return redirect('allot_test')
 
     assignments = TestAssignment.objects.select_related("application__user_id", "test").filter(
@@ -700,6 +918,140 @@ def allot_test(request):
         applications=applications,
         assignments=assignments,
     ))
+
+
+def take_test(request):
+    curr_user = get_current_candidate(request)
+    if not curr_user:
+        return redirect('login')
+
+    assignments = TestAssignment.objects.select_related(
+        "application__user_id",
+        "application__job_id",
+        "test",
+        "test__vacancy",
+    ).filter(application__user_id=curr_user).order_by("-assigned_on", "-id")
+    mark_expired_assignments(assignments)
+
+    assignments = TestAssignment.objects.select_related(
+        "application__user_id",
+        "application__job_id",
+        "test",
+        "test__vacancy",
+    ).filter(application__user_id=curr_user).order_by("-assigned_on", "-id")
+    return render(request, "take_test.html", {
+        "base_template": "base.html",
+        "assignments": assignments,
+    })
+
+
+def take_test_detail(request, assignment_id):
+    curr_user = get_current_candidate(request)
+    if not curr_user:
+        return redirect('login')
+
+    assignment = get_object_or_404(
+        TestAssignment.objects.select_related(
+            "application__user_id",
+            "application__job_id",
+            "test",
+            "test__vacancy",
+        ).prefetch_related("test__questions"),
+        id=assignment_id,
+        application__user_id=curr_user,
+    )
+
+    if assignment.status == "Completed":
+        return redirect('take_test_result', assignment.id)
+
+    if assignment.status == "Expired":
+        messages.error(request, "This test has expired")
+        return redirect('take_test')
+
+    if is_assignment_expired(assignment):
+        assignment.status = "Expired"
+        assignment.completed_on = timezone.now()
+        assignment.save(update_fields=["status", "completed_on"])
+        messages.error(request, "This test has expired")
+        return redirect('take_test')
+
+    questions = list(assignment.test.questions.all().order_by("id"))
+    if not questions:
+        messages.error(request, "No questions are available for this test")
+        return redirect('take_test')
+
+    return render(request, "take_test_detail.html", {
+        "base_template": "base.html",
+        "assignment": assignment,
+        "questions": questions,
+    })
+
+
+def submit_test(request, assignment_id):
+    curr_user = get_current_candidate(request)
+    if not curr_user:
+        return redirect('login')
+
+    if request.method != "POST":
+        return redirect('take_test_detail', assignment_id)
+
+    assignment = get_object_or_404(
+        TestAssignment.objects.select_related("application__user_id", "test").prefetch_related("test__questions"),
+        id=assignment_id,
+        application__user_id=curr_user,
+    )
+
+    if assignment.status != "Pending":
+        messages.error(request, "This test cannot be submitted now")
+        return redirect('take_test')
+
+    if is_assignment_expired(assignment):
+        assignment.status = "Expired"
+        assignment.completed_on = timezone.now()
+        assignment.save(update_fields=["status", "completed_on"])
+        messages.error(request, "Test time expired")
+        return redirect('take_test')
+
+    questions = list(assignment.test.questions.all().order_by("id"))
+    if not questions:
+        messages.error(request, "No questions are available for this test")
+        return redirect('take_test')
+
+    score = 0
+    total_possible = 0
+    for question in questions:
+        total_possible += question.marks or 0
+        selected_answer = request.POST.get(f"answer_{question.id}")
+        if normalize_test_answer(selected_answer) == normalize_test_answer(question.answer):
+            score += question.marks or 0
+
+    percentage = round((score / total_possible) * 100, 2) if total_possible else 0
+
+    with transaction.atomic():
+        assignment.score = score
+        assignment.percentage = percentage
+        assignment.completed_on = timezone.now()
+        assignment.status = "Completed"
+        assignment.save(update_fields=["score", "percentage", "completed_on", "status"])
+
+    messages.success(request, "Test submitted successfully")
+    return redirect('take_test_result', assignment.id)
+
+
+def take_test_result(request, assignment_id):
+    curr_user = get_current_candidate(request)
+    if not curr_user:
+        return redirect('login')
+
+    assignment = get_object_or_404(
+        TestAssignment.objects.select_related("application__user_id", "application__job_id", "test", "test__vacancy"),
+        id=assignment_id,
+        application__user_id=curr_user,
+    )
+    return render(request, "take_test_result.html", {
+        "base_template": "base.html",
+        "assignment": assignment,
+    })
 
 
 

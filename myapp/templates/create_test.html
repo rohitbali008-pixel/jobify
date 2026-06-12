@@ -2,45 +2,39 @@
 
 {% block content %}
 <div class="container py-4">
-  <h3 class="mb-3">Create Test</h3>
+  <h3 class="mb-3">Add Test Category</h3>
   <form method="post" class="row g-3">
     {% csrf_token %}
     <div class="col-md-6">
       <label class="form-label">Test / Job Profile Name</label>
       <input type="text" class="form-control" name="name" required />
     </div>
-    <div class="col-md-6">
-      <label class="form-label">Company</label>
-      <select name="company_id" class="form-select" required>
-        <option value="" disabled selected>Select company</option>
-        {% for company in companies %}
-          <option value="{{ company.id }}">{{ company.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
     <div class="col-12">
-      <button type="submit" class="btn btn-primary">Create Test</button>
+      <button type="submit" class="btn btn-primary">Add Test Category</button>
     </div>
   </form>
 
-  <h4 class="mt-5">Tests</h4>
+  <h4 class="mt-5">Test Categories</h4>
   <div class="table-responsive">
     <table class="table table-striped align-middle">
       <thead>
         <tr>
           <th>Name</th>
-          <th>Company</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for category in categories %}
           <tr>
             <td>{{ category.name }}</td>
-            <td>{{ category.company.name }}</td>
+            <td>
+              <a href="{% url 'update_category' category.id %}" class="btn btn-sm btn-outline-primary">Update</a>
+              <a href="{% url 'delete_category' category.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+            </td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="2" class="text-muted">No tests created yet.</td>
+            <td colspan="2" class="text-muted">No test categories created yet.</td>
           </tr>
         {% endfor %}
       </tbody>

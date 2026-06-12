@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}{{ assignment.test.title }} - Take Test{% endblock %}
+
+{% block hero %}{% endblock %}
+
+{% block content %}
+  <section class="section">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-11">
+          <div class="test-wrapper">
+            <div class="test-header d-flex justify-content-between align-items-center">
+              <div>
+                <span class="badge badge-primary mb-2">Online Assessment</span>
+                <h3 class="fw-bold mb-1">{{ assignment.test.title }}</h3>
+                <p class="text-muted mb-0">Job: {{ assignment.application.job_id.title }}</p>
+              </div>
+              <div class="timer-box text-center">
+                <div class="h4 mb-0 fw-bold" id="timer">00:00</div>
+                <small class="text-muted">Remaining time</small>
+              </div>
+            </div>
+
+            <form method="post" action="{% url 'submit_test' assignment.id %}" id="testForm">
+              {% csrf_token %}
+
+              {% for question in questions %}
+                <div class="question-card card mb-4">
+                  <div class="card-body">
+                    <div class="question-top">
+                      <div class="question-number">{{ forloop.counter }}</div>
+                      <div>
+                        <h5 class="fw-bold mb-1">{{ question.questions }}</h5>
+                        <p class="text-muted mb-0">Marks: {{ question.marks }}</p>
+                      </div>
+                    </div>
+
+                    <div class="options-grid">
+                      <label class="option-card">
+                        <input type="radio" name="answer_{{ question.id }}" value="A" required />
+                        <span>A</span>
+                        {{ question.opt_a }}
+                      </label>
+                      <label class="option-card">
+                        <input type="radio" name="answer_{{ question.id }}" value="B" />
+                        <span>B</span>
+                        {{ question.opt_b }}
+                      </label>
+                      <label class="option-card">
+                        <input type="radio" name="answer_{{ question.id }}" value="C" />
+                        <span>C</span>
+                        {{ question.opt_c }}
+                      </label>
+                      <label class="option-card">
+                        <input type="radio" name="answer_{{ question.id }}" value="D" />
+                        <span>D</span>
+                        {{ question.opt_d }}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+
+              <div class="test-actions">
+                <a href="{% url 'take_test' %}" class="button btn btn-border">Back</a>
+                <button type="submit" id="submitTestBtn" class="button btn btn-common">Submit Test</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const durationSeconds = {{ assignment.test.duration_minutes }} * 60
+      let remainingSeconds = durationSeconds
+      const timerElement = document.getElementById('timer')
+      const submitButton = document.getElementById('submitTestBtn')
+      const form = document.getElementById('testForm')
+      let timerInterval = null
+
+      function pad(value) {
+        return String(value).padStart(2, '0')
+      }
+
+      function updateTimer() {
+        const minutes = Math.floor(remainingSeconds / 60)
+        const seconds = remainingSeconds % 60
+        timerElement.textContent = `${pad(minutes)}:${pad(seconds)}`
+
+        if (remainingSeconds <= 0) {
+          clearInterval(timerInterval)
+          submitButton.disabled = true
+          form.submit()
+        }
+      }
+
+      timerInterval = window.setInterval(function () {
+        remainingSeconds -= 1
+        updateTimer()
+      }, 1000)
+
+      updateTimer()
+
+      form.addEventListener('submit', function () {
+        clearInterval(timerInterval)
+      })
+    })
+  </script>
+
+  <style>
+    .test-wrapper {
+      padding: 2rem;
+      border-radius: 1.5rem;
+      background: #ffffff;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+    }
+
+    .test-header {
+      padding-bottom: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .timer-box {
+      min-width: 140px;
+      padding: 1rem;
+      border-radius: 1rem;
+      background: #eef6ff;
+      color: #0d6efd;
+    }
+
+    .question-card {
+      border: none;
+      border-radius: 1.25rem;
+      background: #f8fafc;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .question-top {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      margin-bottom: 1.25rem;
+    }
+
+    .question-number {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: #0d6efd;
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .option-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 1rem;
+      border-radius: 1rem;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .option-card:hover {
+      border-color: #0d6efd;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(13, 110, 253, 0.12);
+    }
+
+    .option-card input {
+      margin-top: 0.25rem;
+    }
+
+    .option-card span {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: #eef6ff;
+      color: #0d6efd;
+      font-weight: 700;
+    }
+
+    .test-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .test-wrapper {
+        padding: 1.25rem;
+      }
+
+      .test-header {
+        flex-direction: column;
+      }
+
+      .timer-box {
+        width: 100%;
+      }
+
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .test-actions {
+        flex-direction: column-reverse;
+      }
+
+      .test-actions .btn {
+        width: 100%;
+      }
+    }
+  </style>
+{% endblock %}

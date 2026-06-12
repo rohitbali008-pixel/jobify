@@ -106,6 +106,7 @@ class Application(models.Model):
         choices=(
             ("Under Review", "Under Review"),
             ("Shortlisted", "Shortlisted"),
+            ("Interviewed", "Interviewed"),
             ("Rejected", "Rejected"),
             ("Selected", "Selected"),
         ),
@@ -184,7 +185,8 @@ class TestAssignment(models.Model):
 class Interview(models.Model):
     application = models.ForeignKey( Application,on_delete=models.CASCADE, related_name="interviews")
     interviewer = models.ForeignKey( Employee, on_delete=models.SET_NULL,null=True, related_name="assigned_interviews" )
-    interview_type = models.CharField( max_length=20, choices=( ('Technical', 'Technical'), ('HR', 'HR'),  ) )
+    interview_type = models.CharField( max_length=20, choices=( ('Technical', 'Technical'), ('HR', 'HR'),  ), default='Technical', blank=True )
+
     scheduled_at = models.DateTimeField()
     completed_at = models.DateTimeField(null=True,blank=True)
     meeting_link = models.URLField( blank=True, null=True )
