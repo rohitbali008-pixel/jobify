@@ -129,24 +129,10 @@
     {% if messages %}
       <div class="toast-alert-wrapper" aria-live="polite" aria-atomic="true">
         {% for message in messages %}
-          <div class="toast-alert {% if 'success' in message.tags %}
-              
-              
-              
+          <div class="toast-alert {% if 'success' in message.tags %}           
               toast-alert-success
-
-
-
-            {% else %}
-              
-              
-              
-
+            {% else %} 
               toast-alert-error
-
-
-
-
             {% endif %}"
             role="alert">
             <span class="toast-alert-icon">
@@ -184,7 +170,7 @@
                 <li class="nav-item">
                   <a class="nav-link" href="/index/">Home</a>
                 </li>
-                <li class="nav-item dropdown">
+                {% comment %} <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Pages</a>
                   <ul class="dropdown-menu">
                     <li>
@@ -232,29 +218,19 @@
                       <a class="dropdown-item" href="/job-alerts/">Job Alerts</a>
                     </li>
                   </ul>
-                </li>
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Employers</a>
-                  <ul class="dropdown-menu">
-                    <li>
-                      <a class="dropdown-item" href="/post-job/">Add Job</a>
-                    </li>
-                    <li>
-                      <a class="dropdown-item" href="/manage-jobs/">Manage Jobs</a>
-                    </li>
-                    <li>
-                      <a class="dropdown-item" href="/manage-applications/">Manage Applications</a>
-                    </li>
-                    <li>
-                      <a class="dropdown-item" href="/browse-resumes/">Browse Resumes</a>
-                    </li>
-                  </ul>
-                </li>
+                </li> {% endcomment %}
+
                 {% if is_authenticated and user_type == 'user' and candidate_test_assignments_count > 0 %}
                   <li class="nav-item">
                     <a class="nav-link" href="{% url 'take_test' %}">Take Test</a>
                   </li>
                 {% endif %}
+                <li class="nav-item">
+                  <a class="nav-link" href="/about/">About</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="/job-page/">Job</a>
+                </li>
                 <li class="nav-item">
                   <a class="nav-link" href="/contact/">Contact</a>
                 </li>
@@ -273,14 +249,11 @@
                     </a>
                   </li>
                 {% else %}
-                  <li class="nav-item active">
-                    <a class="nav-link" href="/login/">Sign In</a>
-                  </li>
                   <li class="nav-item">
                     <a class="nav-link" href="/register/">Register</a>
                   </li>
                   <li class="button-group">
-                    <a href="/post-job/" class="button btn btn-common">Post a Job</a>
+                    <a href="/login/" class="button btn btn-common">Sign In</a>
                   </li>
                 {% endif %}
               </ul>
