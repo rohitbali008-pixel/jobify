@@ -242,7 +242,7 @@
                     <a href="{% if user_type == 'employee' %}
                         {% url 'employee_profile' %}
                       {% else %}
-                        {% url 'change_password' %}
+                        {% url 'resume' %}
                       {% endif %}"
                       class="button btn btn-common">
                       Profile
@@ -299,24 +299,24 @@
                 <h3 class="block-title">Quick Links</h3>
                 <ul class="menu">
                   <li>
-                    <a href="#">About Us</a>
+                    <a href="{% url 'about' %}">About Us</a>
                   </li>
                   <li>
-                    <a href="#">Support</a>
+                    <a href="{% url 'contact' %}">Support</a>
                   </li>
                   <li>
                     <a href="#">License</a>
                   </li>
                   <li>
-                    <a href="#">Contact</a>
+                    <a href="{% url 'contact' %}">Contact</a>
                   </li>
                 </ul>
                 <ul class="menu">
                   <li>
-                    <a href="#">Terms & Conditions</a>
+                    <a href="{% url 'privacy_policy' %}">Terms & Conditions</a>
                   </li>
                   <li>
-                    <a href="#">Privacy</a>
+                    <a href="{% url 'privacy_policy' %}">Privacy</a>
                   </li>
                   <li>
                     <a href="#">Refferal Terms</a>

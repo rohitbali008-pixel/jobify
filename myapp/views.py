@@ -121,7 +121,7 @@ def send_interview_emails(request, interview, interviewer):
         f"Your interview has been scheduled for the {job.title} position at {company_name}.\n\n"
         f"Interview Type: {interview.interview_type}\n"
         f"Scheduled At: {scheduled_at}\n"
-        f"Interviewer: {interviewer.fullname if interviewer else 'Not assigned'}\n"
+        # f"Interviewer: {interviewer.fullname if interviewer else 'Not assigned'}\n"
         f"Meeting Link: {interview.meeting_link or 'Not provided'}\n\n"
         f"Please join the meeting on time. If you have any questions, contact the HR team."
     )
@@ -129,7 +129,7 @@ def send_interview_emails(request, interview, interviewer):
     interviewer_message = (
         f"Hello {interviewer.fullname if interviewer else 'Interviewer'},\n\n"
         f"A new interview has been assigned to you for {company_name}.\n\n"
-        f"Candidate: {candidate.fullname if candidate else 'Unknown candidate'}\n"
+        # f"Candidate: {candidate.fullname if candidate else 'Unknown candidate'}\n"
         f"Job: {job.title}\n"
         f"Interview Type: {interview.interview_type}\n"
         f"Scheduled At: {scheduled_at}\n"
@@ -298,7 +298,49 @@ def job_details(request, id):
 
 
 def job_page(request):
-    return render(request, "job-page.html")
+    query = request.GET.get('q', '')
+    location_filter = request.GET.get('location', '')
+    category_filter = request.GET.get('category', '')
+
+    jobs = Job.objects.select_related("created_by__company").order_by("-id")
+
+    if query:
+        jobs = jobs.filter(
+            Q(title__icontains=query) |
+            Q(created_by__company__name__icontains=query) |
+            Q(skills__icontains=query)
+        )
+    if location_filter:
+        jobs = jobs.filter(location__icontains=location_filter)
+    if category_filter:
+        jobs = jobs.filter(skills__icontains=category_filter)
+
+    all_locations = list(Job.objects.values_list('location', flat=True).distinct().order_by('location'))
+    all_skills = set()
+    for job in Job.objects.all():
+        for skill in job.skills.split(','):
+            skill = skill.strip()
+            if skill:
+                all_skills.add(skill)
+    all_skills = sorted(all_skills)
+
+    job_list = list(jobs)
+    for job in job_list:
+        job.skills_list = [skill.strip() for skill in job.skills.split(',') if skill.strip()]
+        try:
+            job.experience_display = Profile._meta.get_field("experience").choices[int(job.experience)][1]
+        except (IndexError, ValueError):
+            job.experience_display = f"{job.experience}+"
+
+    context = {
+        "jobs": job_list,
+        "query": query,
+        "location": location_filter,
+        "category": category_filter,
+        "location_list": all_locations,
+        "all_skills": all_skills,
+    }
+    return render(request, "job-page.html", context)
 
 
 def manage_applications(request):
@@ -330,7 +372,77 @@ def privacy_policy(request):
 
 
 def resume(request):
-    return render(request, "resume.html", {"active_page": "resume"})
+    curr_user = get_current_candidate(request)
+    if not curr_user:
+        return redirect('login')
+
+    if request.method == "POST":
+        fullname = request.POST.get("fullname", "").strip()
+        email = request.POST.get("email", "").strip()
+        mobileno = request.POST.get("mobileno", "").strip()
+        dateofbirth = request.POST.get("dateofbirth", "").strip()
+        address = request.POST.get("address", "").strip()
+        gender = request.POST.get("gender", "male")
+        experience = request.POST.get("experience", "")
+        education = request.POST.get("education", "").strip()
+
+        if not fullname or not email or not mobileno or not dateofbirth or not address:
+            messages.error(request, "Please fill all required fields")
+            return redirect('resume')
+
+        if User.objects.exclude(pk=curr_user.pk).filter(email=email).exists():
+            messages.error(request, "Email already exists")
+            return redirect('resume')
+
+        try:
+            mobileno = int(mobileno)
+        except (TypeError, ValueError):
+            messages.error(request, "Please enter a valid mobile number")
+            return redirect('resume')
+
+        try:
+            dateofbirth = datetime.strptime(dateofbirth, "%Y-%m-%d").date()
+        except (TypeError, ValueError):
+            messages.error(request, "Please enter a valid date of birth")
+            return redirect('resume')
+
+        experience_choices = dict(Profile._meta.get_field("experience").choices)
+        if experience not in experience_choices:
+            messages.error(request, "Please select a valid experience")
+            return redirect('resume')
+
+        if gender not in ["male", "female", "other"]:
+            gender = "male"
+
+        with transaction.atomic():
+            curr_user.fullname = fullname
+            curr_user.email = email
+            curr_user.mobileno = mobileno
+            curr_user.dateofbirth = dateofbirth
+            curr_user.address = address
+            curr_user.save()
+
+            profile, _ = Profile.objects.get_or_create(user=curr_user)
+            profile.profile_pic = request.FILES.get("profile_pic") or profile.profile_pic
+            profile.resume = request.FILES.get("resume") or profile.resume
+            profile.gender = gender
+            profile.experience = experience
+            profile.education = education
+            profile.save()
+
+        request.session["fullname"] = curr_user.fullname
+        request.session["email"] = curr_user.email
+        messages.success(request, "Profile updated successfully")
+        return redirect('resume')
+
+    profile, _ = Profile.objects.get_or_create(user=curr_user)
+    return render(request, "resume.html", {
+        "active_page": "my_profile",
+        "user_profile": curr_user,
+        "profile": profile,
+        "experience_choices": Profile._meta.get_field("experience").choices,
+    })
+
 
 
 def single_post(request):

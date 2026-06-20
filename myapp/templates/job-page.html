@@ -11,25 +11,23 @@
               <h3>Find Job</h3>
             </div>
             <div class="job-search-form">
-              <form>
+              <form method="GET">
+                {% csrf_token %}
                 <div class="row">
                   <div class="col-lg-5 col-md-5 col-xs-12">
                     <div class="form-group">
-                      <input class="form-control" type="text" placeholder="Job Title or Company Name">
+                      <input class="form-control" type="text" name="q" placeholder="Job Title or Company Name" value="{{ query }}">
                     </div>
                   </div>
                   <div class="col-lg-3 col-md-5 col-xs-12">
                     <div class="form-group">
                       <div class="search-category-container">
                         <label class="styled-select">
-                          <select>
-                            <option value="none">Locations</option>
-                            <option value="none">New York</option>
-                            <option value="none">California</option>
-                            <option value="none">Washington</option>
-                            <option value="none">Birmingham</option>
-                            <option value="none">Chicago</option>
-                            <option value="none">Phoenix</option>
+                          <select name="location">
+                            <option value="">Locations</option>
+                            {% for loc in location_list %}
+                              <option value="{{ loc }}" {% if location == loc %}selected{% endif %}>{{ loc }}</option>
+                            {% endfor %}
                           </select>
                         </label>
                       </div>
@@ -40,16 +38,11 @@
                     <div class="form-group">
                       <div class="search-category-container">
                         <label class="styled-select">
-                          <select>
-                            <option>All Categories</option>
-                            <option>Finance</option>
-                            <option>IT & Engineering</option>
-                            <option>Education/Training</option>
-                            <option>Art/Design</option>
-                            <option>Sale/Markting</option>
-                            <option>Healthcare</option>
-                            <option>Science</option>                              
-                            <option>Food Services</option>
+                          <select name="category">
+                            <option value="">All Categories</option>
+                            {% for skill in all_skills %}
+                              <option value="{{ skill }}" {% if category == skill %}selected{% endif %}>{{ skill }}</option>
+                            {% endfor %}
                           </select>
                         </label>
                       </div>
@@ -67,182 +60,50 @@
       </div>
     </div>
     <!-- Page Header End --> 
-
-    <!-- Listings Section Start -->
-    <section id="job-listings" class="section">
-      <div class="container">
-        <div class="section-header">  
-          <h2 class="section-title">Featured Jobs</h2>
-          <p>Hand-picked jobs featured depending on popularity and benifits</p>
-        </div>
-        <div class="row">
+  <!-- Listings Section Start -->
+  <section id="job-listings" class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Featured Jobs</h2>
+        <p>Hand-picked jobs featured depending on popularity and benefits</p>
+      </div>
+      <div class="row">
+        {% for job in jobs %}
           <div class="col-lg-6 col-md-12 col-xs-12">
-            <a class="job-listings-featured" href="/job-details/">
+            <a class="job-listings-featured" href="{% url 'job_details' job.id %}">
               <div class="row">
                 <div class="col-lg-6 col-md-6 col-xs-12">
                   <div class="job-company-logo">
-                    <img src="/static/img/features/img1.png" alt="">
+                    <img src="/static/img/features/img{{ forloop.counter|add:0 }}.png" alt="{{ job.created_by.company.name }}" />
                   </div>
                   <div class="job-details">
-                    <h3>Software Engineer</h3>
-                    <span class="company-neme">MizTech</span>
-                    <div class="tags">  
-                      <span><i class="lni-map-marker"></i> New York</span>  
-                      <span><i class="lni-user"></i>John Smith</span>   
+                    <h3>{{ job.title }}</h3>
+                    <span class="company-neme">{{ job.created_by.company.name }}</span>
+                    <div class="tags">
+                      <span><i class="lni-map-marker"></i> {{ job.location }}</span>
+                      <span><i class="lni-user"></i> {{ job.created_by.fullname }}</span>
                     </div>
                   </div>
                 </div>
                 <div class="col-lg-6 col-md-6 col-xs-12 text-right">
                   <div class="tag-type">
-                    <sapn class="heart-icon">
-                      <i class="lni-heart"></i>
-                    </sapn>
-                    <span class="full-time">Full Time</span>
+                    <span class="heart-icon"><i class="lni-heart"></i></span>
+                    {% if job.experience <= 1 %}
+                      <span class="full-time">Full Time</span>
+                    {% else %}
+                      <span class="part-time">Part Time</span>
+                    {% endif %}
                   </div>
                 </div>
               </div>
             </a>
           </div>
-          <div class="col-lg-6 col-md-12 col-xs-12">
-            <a class="job-listings-featured" href="/job-details/">
-              <div class="row">
-                <div class="col-lg-6 col-md-6 col-xs-12">
-                  <div class="job-company-logo">
-                    <img src="/static/img/features/img2.png" alt="">
-                  </div>
-                  <div class="job-details">
-                    <h3>Graphic Designer</h3>
-                    <span class="company-neme">Hunter Inc.</span>
-                    <div class="tags">  
-                      <span><i class="lni-map-marker"></i> New York</span>  
-                      <span><i class="lni-user"></i>John Smith</span>   
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-6 col-md-6 col-xs-12 text-right">
-                  <div class="tag-type">
-                    <sapn class="heart-icon">
-                      <i class="lni-heart"></i>
-                    </sapn>
-                    <span class="part-time">Part Time</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-          <div class="col-lg-6 col-md-12 col-xs-12">
-            <a class="job-listings-featured" href="/job-details/">
-              <div class="row">
-                <div class="col-lg-6 col-md-6 col-xs-12">
-                  <div class="job-company-logo">
-                    <img src="/static/img/features/img3.png" alt="">
-                  </div>
-                  <div class="job-details">
-                    <h3>Managing Director</h3>
-                    <span class="company-neme">MagNews</span>
-                    <div class="tags">  
-                      <span><i class="lni-map-marker"></i> New York</span>  
-                      <span><i class="lni-user"></i>John Smith</span>   
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-6 col-md-6 col-xs-12 text-right">
-                  <div class="tag-type">
-                    <sapn class="heart-icon">
-                      <i class="lni-heart"></i>
-                    </sapn>
-                    <span class="part-time">Part Time</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-          <div class="col-lg-6 col-md-12 col-xs-12">
-            <a class="job-listings-featured" href="/job-details/">
-              <div class="row">
-                <div class="col-lg-6 col-md-6 col-xs-12">
-                  <div class="job-company-logo">
-                    <img src="/static/img/features/img4.png" alt="">
-                  </div>
-                  <div class="job-details">
-                    <h3>Software Engineer</h3>
-                    <span class="company-neme">AmazeSoft</span>
-                    <div class="tags">  
-                      <span><i class="lni-map-marker"></i> New York</span>  
-                      <span><i class="lni-user"></i>John Smith</span>   
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-6 col-md-6 col-xs-12 text-right">
-                  <div class="tag-type">
-                    <sapn class="heart-icon">
-                      <i class="lni-heart"></i>
-                    </sapn>
-                    <span class="full-time">Full Time</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-          <div class="col-lg-6 col-md-12 col-xs-12">
-            <a class="job-listings-featured" href="/job-details/">
-              <div class="row">
-                <div class="col-lg-6 col-md-6 col-xs-12">
-                  <div class="job-company-logo">
-                    <img src="/static/img/features/img5.png" alt="">
-                  </div>
-                  <div class="job-details">
-                    <h3>Graphic Designer</h3>
-                    <span class="company-neme">Bingo</span>
-                    <div class="tags">  
-                      <span><i class="lni-map-marker"></i> New York</span>  
-                      <span><i class="lni-user"></i>John Smith</span>   
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-6 col-md-6 col-xs-12 text-right">
-                  <div class="tag-type">
-                    <sapn class="heart-icon">
-                      <i class="lni-heart"></i>
-                    </sapn>
-                    <span class="full-time">Full Time</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-          <div class="col-lg-6 col-md-12 col-xs-12">
-            <a class="job-listings-featured" href="/job-details/">
-              <div class="row">
-                <div class="col-lg-6 col-md-6 col-xs-12">
-                  <div class="job-company-logo">
-                    <img src="/static/img/features/img6.png" alt="">
-                  </div>
-                  <div class="job-details">
-                    <h3>Managing Director</h3>
-                    <span class="company-neme">MagNews</span>
-                    <div class="tags">  
-                      <span><i class="lni-map-marker"></i> New York</span>  
-                      <span><i class="lni-user"></i>John Smith</span>   
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-6 col-md-6 col-xs-12 text-right">
-                  <div class="tag-type">
-                    <sapn class="heart-icon">
-                      <i class="lni-heart"></i>
-                    </sapn>
-                    <span class="part-time">Part Time</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-          <div class="col-12 text-center mt-4">
-            <a href="/job-page/" class="btn btn-common">Browse All Jobs</a>
-          </div>
+        {% endfor %}
+        <div class="col-12 text-center mt-4">
+          <a href="/job-page/" class="btn btn-common">Browse All Jobs</a>
         </div>
       </div>
-    </section>
-    <!-- Listings Section End -->
+    </div>
+  </section>
+  <!-- Listings Section End -->
 {% endblock %}

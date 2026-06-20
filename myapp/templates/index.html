@@ -12,25 +12,25 @@
             <br /> who value your talent and support your long-term professional growth.
           </p>
           <div class="job-search-form">
-            <form>
+            <form method="GET" action="{% url 'job_page' %}">
               <div class="row">
                 <div class="col-lg-5 col-md-6 col-xs-12">
                   <div class="form-group">
-                    <input class="form-control" type="text" placeholder="Job Title or Company Name" />
+                    <input class="form-control" type="text" name="q" placeholder="Job Title or Company Name" />
                   </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-xs-12">
                   <div class="form-group">
                     <div class="search-category-container">
                       <label class="styled-select">
-                        <select>
-                          <option value="none">Locations</option>
-                          <option value="none">New York</option>
-                          <option value="none">California</option>
-                          <option value="none">Washington</option>
-                          <option value="none">Birmingham</option>
-                          <option value="none">Chicago</option>
-                          <option value="none">Phoenix</option>
+                        <select name="location">
+                          <option value="">Locations</option>
+                          <option value="New York">New York</option>
+                          <option value="California">California</option>
+                          <option value="Washington">Washington</option>
+                          <option value="Birmingham">Birmingham</option>
+                          <option value="Chicago">Chicago</option>
+                          <option value="Phoenix">Phoenix</option>
                         </select>
                       </label>
                     </div>
@@ -41,8 +41,8 @@
                   <div class="form-group">
                     <div class="search-category-container">
                       <label class="styled-select">
-                        <select>
-                          <option>All Categories</option>
+                        <select name="category">
+                          <option value="">All Categories</option>
                           <option>Finance</option>
                           <option>IT & Engineering</option>
                           <option>Education/Training</option>

@@ -1,126 +1,79 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Take Test - interviewIQ{% endblock %}
 
 {% block hero %}{% endblock %}
 
 {% block content %}
-  <section class="section">
+  <!-- Page Header Start -->
+  <div class="page-header">
     <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-10">
-          <div class="assignments-header mb-4">
-            <span class="badge badge-primary mb-2">Assessment Portal</span>
-            <h3 class="fw-bold mb-2">Assigned Tests</h3>
-            <p class="text-muted mb-0">Tests allotted by companies will appear here.</p>
+      <div class="row">
+        <div class="col-lg-12">
+          <div class="inner-header">
+            <h3>Take Test</h3>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Page Header End -->
 
-          {% for assignment in assignments %}
-            <div class="assignment-card card mb-3">
-              <div class="card-body">
-                <div class="row align-items-center">
-                  <div class="col-lg-8">
-                    <div class="d-flex align-items-start gap-3">
-                      <div class="job-icon">T</div>
-                      <div>
-                        <h5 class="fw-bold mb-1">{{ assignment.test.title }}</h5>
-                        <p class="mb-1 text-muted">Job: {{ assignment.application.job_id.title }}</p>
-                        <p class="mb-0 text-muted">{{ assignment.test.duration_minutes }} minutes | Total Marks: {{ assignment.test.total_marks }} | Passing Marks: {{ assignment.test.passing_marks }}</p>
-                      </div>
+  <!-- Test Listings Section Start -->
+  <section id="test-listings" class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Assigned Tests</h2>
+        <p>Tests allotted by companies will appear here.</p>
+      </div>
+
+      <div class="row">
+        {% for assignment in assignments %}
+          <div class="col-lg-6 col-md-12 col-xs-12">
+            <div class="job-listings-featured" style="width: 111% !important;">
+              <div class="row">
+                <div class="col-lg-7 col-md-7 col-xs-12">
+                  <div class="job-company-logo">
+                    <img src="/static/img/features/img{{ forloop.counter }}.png" alt="{{ assignment.test.title }}">
+                  </div>
+                  <div class="job-details">
+                    <h3>{{ assignment.test.title }}</h3>
+                    <span class="company-neme">Job: {{ assignment.application.job_id.title }}</span>
+                    <div class="tags">
+                      <span><i class="lni-map-marker"></i> {{ assignment.test.duration_minutes }} minutes</span>
+                      <span><i class="lni-layers"></i> Total Marks: {{ assignment.test.total_marks }}</span>
+                      <span><i class="lni-graduation"></i> Passing: {{ assignment.test.passing_marks }}</span>
                     </div>
                   </div>
-                  <div class="col-lg-4 text-lg-right mt-3 mt-lg-0">
+                </div>
+                <div class="col-lg-5 col-md-5 col-xs-12 text-right">
+                  <div class="tag-type">
                     {% if assignment.status == 'Pending' %}
-                      <span class="badge badge-info mb-2">Pending</span>
-                      <a href="{% url 'take_test_detail' assignment.id %}" class="button btn btn-common btn-sm">Start Test</a>
+                      <span class="full-time">Pending</span>
+                      <a href="{% url 'take_test_detail' assignment.id %}" class="btn-apply">Start Test</a>
                     {% elif assignment.status == 'Completed' %}
-                      <span class="badge badge-success mb-2">Completed</span>
-                      <a href="{% url 'take_test_result' assignment.id %}" class="button btn btn-common btn-sm">View Result</a>
+                      <span class="part-time">Completed</span>
+                      <a href="{% url 'take_test_result' assignment.id %}" class="btn-apply">View Result</a>
                     {% else %}
-                      <span class="badge badge-danger mb-2">Expired</span>
+                      <span class="part-time">Expired</span>
                     {% endif %}
                   </div>
                 </div>
               </div>
             </div>
-          {% empty %}
-            <div class="empty-state">
-              <div class="empty-icon">✦</div>
-              <h4 class="fw-bold mb-2">No Tests Available</h4>
-              <p class="text-muted mb-0">No tests have been allotted to you yet.</p>
+          </div>
+        {% empty %}
+          <div class="col-12">
+            <div class="job-alerts-item text-center">
+              <i class="lni-book display-4 text-info mb-3"></i>
+              <h3 class="alerts-title">No Tests Available</h3>
+              <p class="mb-0">No tests have been allotted to you yet.</p>
             </div>
-          {% endfor %}
-        </div>
+          </div>
+        {% endfor %}
       </div>
     </div>
   </section>
-
-  <style>
-    .assignments-header {
-      padding: 1.5rem;
-      border-radius: 1.5rem;
-      background: linear-gradient(135deg, #0d6efd, #0dcaf0);
-      color: #ffffff;
-      box-shadow: 0 16px 36px rgba(13, 110, 253, 0.22);
-    }
-
-    .assignments-header .text-muted {
-      color: rgba(255, 255, 255, 0.85) !important;
-    }
-
-    .assignment-card {
-      border: none;
-      border-radius: 1.25rem;
-      overflow: hidden;
-      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
-      transition: 0.2s ease;
-    }
-
-    .assignment-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
-    }
-
-    .job-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      background: #eef6ff;
-      color: #0d6efd;
-      font-weight: 800;
-      font-size: 1.35rem;
-    }
-
-    .empty-state {
-      padding: 3rem 2rem;
-      border-radius: 1.5rem;
-      text-align: center;
-      background: #f8fafc;
-      border: 1px dashed #cbd5e1;
-    }
-
-    .empty-icon {
-      width: 70px;
-      height: 70px;
-      margin: 0 auto 1rem;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #eef6ff;
-      color: #0d6efd;
-      font-size: 2rem;
-      font-weight: 700;
-    }
-
-    @media (max-width: 991px) {
-      .text-lg-right {
-        text-align: left !important;
-      }
-    }
-  </style>
+  <!-- Test Listings Section End -->
 {% endblock %}

@@ -1,58 +1,116 @@
 {% extends "user_profile_base.html" %}
 {% load static %}
 
-{% block page_title %}Resume{% endblock %}
+{% block page_title %}My Profile{% endblock %}
 
 {% block section %}
-            <div class="inner-box my-resume">
-              <div class="author-resume">
-                <div class="thumb">
-                  <img src="/static/img/resume/img-1.png" alt="">
+              <div class="job-alerts-item">
+                <h3 class="alerts-title">My Profile</h3>
+                {% if messages %}
+                <div class="mb-3">
+                  {% for message in messages %}
+                  <div class="alert alert-{{ message.tags }} mb-2" role="alert">{{ message }}</div>
+                  {% endfor %}
                 </div>
-                <div class="author-info">
-                  <h3>Mark Anderson</h3>
-                  <p class="sub-title">UI/UX Designer</p>
-                  <p><span class="address"><i class="lni-map-marker"></i>Mahattan, NYC, USA</span> <span><i class="ti-phone"></i>(+01) 211-123-5678</span></p>
-                  <div class="social-link">  
-                    <a href="#" class="Twitter"><i class="lni-twitter-filled"></i></a>
-                    <a href="#" class="facebook"><i class="lni-facebook-filled"></i></a>
-                    <a href="#" class="google"><i class="lni-google-plus"></i></a>
-                    <a href="#" class="linkedin"><i class="lni-linkedin-fill"></i></a>
+                {% endif %}
+
+                <form class="form" method="post" action="{% url 'resume' %}" enctype="multipart/form-data">
+                  {% csrf_token %}
+
+                  
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group is-empty">
+                        <label class="control-label">Full Name*</label>
+                        <input class="form-control" type="text" name="fullname" value="{{ user_profile.fullname }}" required>
+                        <span class="material-input"></span>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group is-empty">
+                        <label class="control-label">Email*</label>
+                        <input class="form-control" type="email" name="email" value="{{ user_profile.email }}" required>
+                        <span class="material-input"></span>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group is-empty">
+                        <label class="control-label">Mobile Number*</label>
+                        <input class="form-control" type="number" name="mobileno" value="{{ user_profile.mobileno }}" required>
+                        <span class="material-input"></span>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group is-empty">
+                        <label class="control-label">Date of Birth*</label>
+                        <input class="form-control" type="date" name="dateofbirth" value="{{ user_profile.dateofbirth|date:'Y-m-d' }}" required>
+                        <span class="material-input"></span>
+                      </div>
+                    </div>
                   </div>
-                </div>                  
+
+                  <div class="form-group is-empty">
+                    <label class="control-label">Address*</label>
+                    <textarea class="form-control" name="address" rows="4" required>{{ user_profile.address }}</textarea>
+                    <span class="material-input"></span>
+                  </div>
+
+                
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group is-empty">
+                        <label class="control-label">Gender</label>
+                        <select class="form-control" name="gender">
+                          <option value="male" {% if profile.gender == "male" %}selected{% endif %}>Male</option>
+                          <option value="female" {% if profile.gender == "female" %}selected{% endif %}>Female</option>
+                          <option value="other" {% if profile.gender == "other" %}selected{% endif %}>Other</option>
+                        </select>
+                        <span class="material-input"></span>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group is-empty">
+                        <label class="control-label">Experience</label>
+                        <select class="form-control" name="experience" required>
+                          {% for value, label in experience_choices %}
+                            <option value="{{ value }}" {% if profile.experience == value %}selected{% endif %}>{{ label }}</option>
+                          {% endfor %}
+                        </select>
+                        <span class="material-input"></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-group is-empty">
+                    <label class="control-label">Education</label>
+                    <input class="form-control" type="text" name="education" value="{{ profile.education|default:'' }}">
+                    <span class="material-input"></span>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group is-empty">
+                        <label class="control-label">Profile Picture</label>
+                        <input class="form-control" type="file" name="profile_pic" accept="image/*">
+                        {% if profile.profile_pic %}
+                          <small class="form-text text-muted">Current: <a href="{{ profile.profile_pic.url }}" target="_blank">{{ profile.profile_pic }}</a></small>
+                        {% endif %}
+                        <span class="material-input"></span>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group is-empty">
+                        <label class="control-label">Resume</label>
+                        <input class="form-control" type="file" name="resume" accept=".pdf,.doc,.docx,.txt,.rtf">
+                        {% if profile.resume %}
+                          <small class="form-text text-muted">Current: <a href="{{ profile.resume.url }}" target="_blank">{{ profile.resume }}</a></small>
+                        {% endif %}
+                        <span class="material-input"></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-common" id="submit">Save Profile</button>
+                </form>
               </div>
-              <div class="about-me item">
-                <h3>About Me</h3>
-                <p>Nullam semper erat arcu, ac tincidunt sem venenatis vel. Curabitur a dolor ac ligula fermentum eusmod ac ullamcorper nulla. Integer blandit uitricies aliquam. Pellentesque quis dui varius, dapibus vilit id, ipsum. Morbi ac eros feugiat, lacinia elit ut, elementum turpis. Curabitur justo sapien, tempus sit amet ruturm eu, commodo eu lacus. Morbi in ligula nibh. Maecenas ut mi at odio hendririt eleif end tempor vitae augue. Fusce eget arcu et nibh dapibus maximus consectetur in est. Sed iaculis Luctus nibh sed veneatis. </p>
-              </div>
-              <div class="work-experence item">
-                <h3>Work Experience</h3>
-                <h4>UI/UX Designer</h4>
-                <h5>Bannana INC.</h5>
-                <span class="date">Fab 2017-Present(5year)</span>
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Libero vero, dolores, officia quibusdam architecto sapiente eos voluptas odit ab veniam porro quae possimus itaque, quas! Tempora sequi nobis, atque incidunt!</p>
-                <p><a href="#">4 Projects</a></p>
-                <br>
-                <h4>UI Designer</h4>
-                <h5>Whale Creative</h5>
-                <span class="date">Fab 2017-Present(2year)</span>
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Libero vero, dolores, officia quibusdam architecto sapiente eos voluptas odit ab veniam porro quae possimus itaque, quas! Tempora sequi nobis, atque incidunt!</p>
-                <p><a href="#">4 Projects</a></p>
-              </div>
-              <div class="education item">
-                <h3>Education</h3>
-                <h4>Massachusetts Institute Of Technology</h4>
-                <p>Bachelor of Computer Science</p>
-                <span class="date">2010-2014</span>
-                <br>
-                <h4>Massachusetts Institute Of Technology</h4>
-                <p>Bachelor of Computer Science</p>
-                <span class="date">2010-2014</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>      
-    </div>
-    <!-- End Content -->
 {% endblock %}
