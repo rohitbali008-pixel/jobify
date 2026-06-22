@@ -5,7 +5,21 @@
 {% block hero %}{% endblock %}
 
 {% block content %}
-  <section class="section">
+  <div id="security-overlay" class="security-overlay">
+    <div class="security-message text-center p-5 card shadow">
+      <h3 class="fw-bold mb-3 text-danger">Security Permissions Required</h3>
+      <p>This test is strictly monitored. To begin, you must allow:</p>
+      <ul class="text-start mb-4">
+        <li>Camera & Microphone Access</li>
+        <li>Location Access</li>
+        <li>Fullscreen Mode</li>
+      </ul>
+      <button id="start-test-btn" class="btn btn-primary btn-lg w-100">Grant Permissions & Start Test</button>
+      <p id="security-error" class="text-danger mt-3 fw-bold" style="display: none;"></p>
+    </div>
+  </div>
+
+  <section class="section test-blurred" id="test-content" style="pointer-events: none;">
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-lg-11">
@@ -75,6 +89,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      // ---------------- Timer Logic ----------------
       const durationSeconds = {{ assignment.test.duration_minutes }} * 60
       let remainingSeconds = durationSeconds
       const timerElement = document.getElementById('timer')
@@ -98,20 +113,144 @@
         }
       }
 
-      timerInterval = window.setInterval(function () {
-        remainingSeconds -= 1
+      function startTimer() {
         updateTimer()
-      }, 1000)
-
-      updateTimer()
+        timerInterval = window.setInterval(function () {
+          remainingSeconds -= 1
+          updateTimer()
+        }, 1000)
+      }
 
       form.addEventListener('submit', function () {
         clearInterval(timerInterval)
       })
+
+      // ---------------- Security Logic ----------------
+      let tabSwitchCount = 0;
+      const MAX_SWITCHES = 4;
+      const overlay = document.getElementById('security-overlay');
+      const startBtn = document.getElementById('start-test-btn');
+      const testContent = document.getElementById('test-content');
+      const secError = document.getElementById('security-error');
+
+      startBtn.addEventListener('click', async () => {
+        try {
+          secError.style.display = 'none';
+          startBtn.textContent = 'Requesting Permissions...';
+          startBtn.disabled = true;
+
+          // Request Camera & Audio
+          await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          
+          // Request Location
+          await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+          });
+          
+          // Request Fullscreen
+          if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+          }
+
+          // Setup test active state
+          overlay.style.display = 'none';
+          testContent.classList.remove('test-blurred');
+          testContent.style.pointerEvents = 'auto';
+          document.body.classList.add('test-active');
+
+          // Start timer only after permissions granted
+          startTimer();
+
+        } catch (err) {
+          startBtn.textContent = 'Grant Permissions & Start Test';
+          startBtn.disabled = false;
+          secError.textContent = "You must allow Camera, Microphone, Location, and Fullscreen to take the test. Error: " + err.message;
+          secError.style.display = 'block';
+        }
+      });
+
+      // Fullscreen check
+      document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement && overlay.style.display === 'none') {
+          alert("Warning: You must remain in full screen mode to continue the test!");
+          if (document.documentElement.requestFullscreen) {
+             document.documentElement.requestFullscreen().catch(e => console.log(e));
+          }
+        }
+      });
+
+      // Disable Right Click
+      document.addEventListener('contextmenu', e => e.preventDefault());
+
+      // Disable Inspect / Specific Keys
+      document.addEventListener('keydown', e => {
+        if (
+          e.key === 'F12' ||
+          (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
+          (e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.key === 'P' || e.key === 'p' || e.key === 'S' || e.key === 's')) ||
+          e.key === 'PrintScreen'
+        ) {
+          e.preventDefault();
+          alert('This action is disabled during the test.');
+        }
+      });
+
+      // Disable Copy, Cut, Paste
+      ['copy', 'cut', 'paste'].forEach(evt => {
+        document.addEventListener(evt, e => {
+          e.preventDefault();
+          alert(`${evt.charAt(0).toUpperCase() + evt.slice(1)}ing is not allowed!`);
+        });
+      });
+
+      // Tab switching detection
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && overlay.style.display === 'none') {
+          tabSwitchCount++;
+          if (tabSwitchCount > MAX_SWITCHES) {
+            alert('You have switched tabs too many times. You are disqualified.');
+            form.submit();
+          } else {
+            alert(`Warning: Tab switching is prohibited! (${tabSwitchCount}/${MAX_SWITCHES})`);
+          }
+        }
+      });
+
     })
   </script>
 
   <style>
+    body.test-active {
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+    
+    .security-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(248, 250, 252, 0.98);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .security-message {
+      max-width: 500px;
+      background: #fff;
+      border-radius: 1.5rem;
+      border: 1px solid #e2e8f0;
+    }
+
+    .test-blurred {
+      filter: blur(15px);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
     .test-wrapper {
       padding: 2rem;
       border-radius: 1.5rem;

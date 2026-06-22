@@ -4,15 +4,7 @@
 {% block page_title %}My Profile{% endblock %}
 
 {% block section %}
-              <div class="job-alerts-item">
-                <h3 class="alerts-title">My Profile</h3>
-                {% if messages %}
-                <div class="mb-3">
-                  {% for message in messages %}
-                  <div class="alert alert-{{ message.tags }} mb-2" role="alert">{{ message }}</div>
-                  {% endfor %}
-                </div>
-                {% endif %}
+              
 
                 <form class="form" method="post" action="{% url 'resume' %}" enctype="multipart/form-data">
                   {% csrf_token %}

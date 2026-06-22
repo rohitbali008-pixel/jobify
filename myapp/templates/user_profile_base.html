@@ -31,9 +31,9 @@
                 <li>
                   <a {% if active_page == 'bookmarked' %} class="active"{% endif %} href="/bookmarked/">Bookmarked Jobs</a>
                 </li>
-                <li>
+                {% comment %} <li>
                   <a {% if active_page == 'notifications' %} class="active"{% endif %} href="/notifications/">Notifications <span class="notinumber">2</span></a>
-                </li>
+                </li> {% endcomment %}
                 <li>
                   <a {% if active_page == 'manage_applications' %} class="active"{% endif %} href="/manage-applications/">Manage Applications</a>
                 </li>
