@@ -6,137 +6,73 @@
 {% block section %}
              <div class="job-alerts-item">
               <h3 class="alerts-title">Manage applications</h3>
+              {% for app in applications %}
               <div class="applications-content">
                 <div class="row">
                   <div class="col-md-4">
                     <div class="thums">
-                      <img src="/static/img/jobs/img-1.jpg" alt="">
+                      {% if app.job_id.created_by.company.logo %}
+                      <img src="{{ app.job_id.created_by.company.logo.url }}" alt="{{ app.job_id.created_by.company.name }}">
+                      {% else %}
+                      <img src="{% static 'img/jobs/img-1.jpg' %}" alt="Default Image">
+                      {% endif %}
                     </div>
-                    <h3>Web Designer Meeded</h3>
-                    <span>Quick Studio</span>
+                    <h3>{{ app.job_id.title }}</h3>
+                    <span>{{ app.job_id.created_by.company.name }}</span>
                   </div>
                    <div class="col-md-3">
                     <p><span class="full-time">Full-Time</span></p>
                   </div>
                   <div class="col-md-3">
-                    <p>Nov 14th, 2017</p>
+                    <p>{{ app.apply_date|date:"M jS, Y" }}</p>
                   </div>                   
                   <div class="col-md-2">
-                    <p>Rejected</p>
+                    <p>
+                      {% if app.status == 'Selected' or app.status == 'Approved' or app.status == 'Processed' %}
+                      <span class="text-success">{{ app.status }}</span>
+                      {% elif app.status == 'Rejected' %}
+                      <span class="text-danger">{{ app.status }}</span>
+                      {% else %}
+                      <span class="text-warning">{{ app.status }}</span>
+                      {% endif %}
+                    </p>
                   </div>
                 </div>
               </div>
+              {% empty %}
               <div class="applications-content">
                 <div class="row">
-                  <div class="col-md-4">
-                    <div class="thums">
-                      <img src="/static/img/jobs/img-1.jpg" alt="">
-                    </div>
-                    <h3>Front-end developer needed</h3>
-                    <span>Quick Studio</span>
-                  </div>
-                   <div class="col-md-3">
-                    <p><span class="full-time">Full-Time</span></p>
-                  </div>
-                  <div class="col-md-3">
-                    <p>Nov 14th, 2017</p>
-                  </div>                   
-                  <div class="col-md-2">
-                    <p>Processed</p>
+                  <div class="col-md-12 text-center">
+                    <p>You have not applied to any jobs yet.</p>
                   </div>
                 </div>
               </div>
-              <div class="applications-content">
-                <div class="row">
-                  <div class="col-md-4">
-                    <div class="thums">
-                      <img src="/static/img/jobs/img-1.jpg" alt="">
-                    </div>
-                    <h3>We're looking for an Art Director</h3>
-                    <span>Quick Studio</span>
-                  </div>
-                   <div class="col-md-3">
-                    <p><span class="part-time">Part-Time</span></p>
-                  </div>
-                  <div class="col-md-3">
-                    <p>Nov 14th, 2017</p>
-                  </div>                   
-                  <div class="col-md-2">
-                    <p>Rejected</p>
-                  </div>
-                </div>
-              </div>
-              <div class="applications-content">
-                <div class="row">
-                  <div class="col-md-4">
-                    <div class="thums">
-                      <img src="/static/img/jobs/img-1.jpg" alt="">
-                    </div>
-                    <h3>Web designer needed</h3>
-                    <span>Quick Studio</span>
-                  </div>
-                   <div class="col-md-3">
-                    <p><span class="full-time">Full-Time</span></p>
-                  </div>
-                  <div class="col-md-3">
-                    <p>Nov 14th, 2017</p>
-                  </div>                   
-                  <div class="col-md-2">
-                    <p>Approved</p>
-                  </div>
-                </div>
-              </div>
-              <div class="applications-content">
-                <div class="row">
-                  <div class="col-md-4">
-                    <div class="thums">
-                      <img src="/static/img/jobs/img-1.jpg" alt="">
-                    </div>
-                    <h3>Looking for a Project Leader</h3>
-                    <span>Quick Studio</span>
-                  </div>
-                   <div class="col-md-3">
-                    <p><span class="full-time">Full-Time</span></p>
-                  </div>
-                  <div class="col-md-3">
-                    <p>Nov 14th, 2017</p>
-                  </div>                   
-                  <div class="col-md-2">
-                    <p>Rejected</p>
-                  </div>
-                </div>
-              </div>
-              <div class="applications-content">
-                <div class="row">
-                  <div class="col-md-4">
-                    <div class="thums">
-                      <img src="/static/img/jobs/img-1.jpg" alt="">
-                    </div>
-                    <h3>We're hiring an fullstack designer</h3>
-                    <span>Quick Studio</span>
-                  </div>
-                   <div class="col-md-3">
-                    <p><span class="part-time">Part-Time</span></p>
-                  </div>
-                  <div class="col-md-3">
-                    <p>Nov 14th, 2017</p>
-                  </div>                   
-                  <div class="col-md-2">
-                    <p>Rejected</p>
-                  </div>
-                </div>
-              </div>
+              {% endfor %}
               <br>
               <!-- Start Pagination -->
+              {% if applications.has_other_pages %}
               <ul class="pagination">              
-                <li class="active"><a href="#" class="btn-prev" ><i class="lni-angle-left"></i> prev</a></li>
-                <li><a href="#">1</a></li>
-                <li><a href="#">2</a></li>
-                <li><a href="#">3</a></li>
-                <li><a href="#">4</a></li>
-                <li><a href="#">5</a></li>
-                <li class="active"><a href="#" class="btn-next">Next <i class="lni-angle-right"></i></a></li>
+                {% if applications.has_previous %}
+                <li class="active"><a href="?page={{ applications.previous_page_number }}" class="btn-prev" ><i class="lni-angle-left"></i> prev</a></li>
+                {% else %}
+                <li class="disabled"><a href="#" class="btn-prev" ><i class="lni-angle-left"></i> prev</a></li>
+                {% endif %}
+                
+                {% for i in applications.paginator.page_range %}
+                  {% if applications.number == i %}
+                  <li class="active"><a href="#">{{ i }}</a></li>
+                  {% else %}
+                  <li><a href="?page={{ i }}">{{ i }}</a></li>
+                  {% endif %}
+                {% endfor %}
+                
+                {% if applications.has_next %}
+                <li class="active"><a href="?page={{ applications.next_page_number }}" class="btn-next">Next <i class="lni-angle-right"></i></a></li>
+                {% else %}
+                <li class="disabled"><a href="#" class="btn-next">Next <i class="lni-angle-right"></i></a></li>
+                {% endif %}
               </ul>
+              {% endif %}
               <!-- End Pagination -->
             </div>
           </div>

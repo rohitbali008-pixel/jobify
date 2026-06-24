@@ -61,7 +61,7 @@ def normalize_test_answer(value):
 
 
 def is_assignment_expired(assignment):
-    return timezone.now() > assignment.assigned_on + timedelta(minutes=assignment.test.duration_minutes)
+    return timezone.now() > assignment.assigned_on + timedelta(minutes=2880)
 
 
 def mark_expired_assignments(assignments):
@@ -344,7 +344,27 @@ def job_page(request):
 
 
 def manage_applications(request):
-    return render(request, "manage-applications.html", {"active_page": "manage_applications"})
+    user = get_current_candidate(request)
+    if not user:
+        messages.error(request, "Please login first.")
+        return redirect('login')
+    
+    # Fetch applications for this user
+    applications_list = Application.objects.filter(user_id=user).select_related(
+        'job_id', 'job_id__created_by', 'job_id__created_by__company'
+    ).order_by('-apply_date')
+    
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(applications_list, 10) # 10 items per page
+    page_number = request.GET.get('page')
+    applications = paginator.get_page(page_number)
+    
+    context = {
+        "active_page": "manage_applications",
+        "applications": applications
+    }
+    return render(request, "manage-applications.html", context)
 
 
 def manage_jobs(request):
